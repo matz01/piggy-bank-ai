@@ -1,122 +1,130 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useCallback } from 'react';
+import { useSession } from './store/sessionStore.js';
+import { startTranscription } from './services/speech.js';
+import { parse } from './services/api.js';
+import { saveTransaction, resolveAndSaveTags } from './services/db.js';
+import { isClarification } from '@pbai/shared';
+import { MicButton } from './components/MicButton.js';
+import { TagChips } from './components/TagChips.js';
+import { TransactionPreview } from './components/TransactionPreview.js';
+import { ClarificationPrompt } from './components/ClarificationPrompt.js';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const session = useSession();
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [stopRecognition, setStopRecognition] = useState<(() => void) | null>(null);
+
+  const handleMicPress = useCallback(() => {
+    if (session.state === 'processing') return;
+
+    session.setState('recording');
+
+    const stop = startTranscription({
+      onResult: async (transcript) => {
+        session.setState('processing');
+
+        const response = await parse({
+          text: transcript,
+          partial: session.partial ?? undefined,
+        });
+
+        if (isClarification(response)) {
+          session.setClarification(response.clarification);
+          session.setState('clarification');
+        } else {
+          session.setPartial(response);
+          setSelectedTags(response.tag);
+          session.setState('preview');
+        }
+      },
+      onEnd: () => {
+        if (session.state === 'recording') session.setState('processing');
+      },
+      onError: (err) => {
+        console.error('Speech error:', err);
+        session.setState('idle');
+      },
+    });
+
+    setStopRecognition(() => stop);
+  }, [session]);
+
+  const handleMicRelease = useCallback(() => {
+    stopRecognition?.();
+  }, [stopRecognition]);
+
+  const handleOk = useCallback(async () => {
+    if (!session.partial?.titolo || session.partial?.importo == null) return;
+
+    const tag_ids = await resolveAndSaveTags(selectedTags);
+    await saveTransaction({
+      id: `${crypto.randomUUID()}-${Date.now()}`,
+      titolo: session.partial.titolo,
+      importo: session.partial.importo,
+      data: Date.now(),
+      tag_ids,
+    });
+
+    session.reset();
+    setSelectedTags([]);
+  }, [session, selectedTags]);
+
+  const handleCancel = useCallback(() => {
+    stopRecognition?.();
+    session.reset();
+    setSelectedTags([]);
+  }, [session, stopRecognition]);
+
+  const hasPartial = session.state === 'preview' || session.state === 'clarification';
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-between p-6 max-w-sm mx-auto">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 w-full">
+        {session.state === 'preview' && session.partial?.titolo && session.partial?.importo != null && (
+          <>
+            <TransactionPreview titolo={session.partial.titolo} importo={session.partial.importo} />
+            <TagChips tags={session.partial.tag ?? []} selected={selectedTags} onChange={setSelectedTags} />
+          </>
+        )}
+
+        {session.state === 'clarification' && session.clarification && (
+          <ClarificationPrompt question={session.clarification} />
+        )}
+
+        {session.state === 'idle' && (
+          <p className="text-gray-400 text-sm">Tieni premuto il microfono per registrare una spesa</p>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between w-full max-w-xs mt-8">
         <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          onClick={handleCancel}
+          disabled={!hasPartial}
+          className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-opacity ${
+            hasPartial ? 'text-red-500 bg-red-50' : 'opacity-0 pointer-events-none'
+          }`}
+          aria-label="Annulla"
         >
-          Count is {count}
+          ✕
         </button>
-      </section>
 
-      <div className="ticks"></div>
+        <MicButton
+          sessionState={session.state}
+          onPress={handleMicPress}
+          onRelease={handleMicRelease}
+        />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <button
+          onClick={handleOk}
+          disabled={session.state !== 'preview'}
+          className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-opacity ${
+            session.state === 'preview' ? 'text-green-600 bg-green-50' : 'opacity-0 pointer-events-none'
+          }`}
+          aria-label="Salva"
+        >
+          ✓
+        </button>
+      </div>
+    </div>
+  );
 }
-
-export default App
