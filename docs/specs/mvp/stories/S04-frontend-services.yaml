@@ -1,0 +1,18 @@
+id: S04
+epic: E03-frontend
+title: Frontend Services
+description: Web Speech API wrapper and API client
+status: pending
+merge: null
+tasks:
+  - id: T009
+    title: Web Speech API wrapper
+    description: services/speech.ts — startTranscription(options) → stop fn. No unit tests (browser-native API)
+    status: pending
+    commit: null
+
+  - id: T010
+    title: API client service
+    description: services/api.ts — parse(ParseRequest) → ParseResponse. Reads VITE_API_URL. Tests with stubbed fetch
+    status: pending
+    commit: null

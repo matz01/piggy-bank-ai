@@ -1,0 +1,12 @@
+id: mvp
+title: piggy-bank-ai MVP
+description: >
+  Mobile-first voice expense entry with AI parsing, tag dictionary,
+  and IndexedDB storage. Monorepo (pnpm workspaces).
+status: planned
+epics:
+  - E01-infrastructure
+  - E02-backend
+  - E03-frontend
+plan: docs/superpowers/plans/2026-05-20-mvp.md
+design: docs/superpowers/specs/2026-05-20-mvp-design.md

@@ -1,0 +1,18 @@
+id: S01
+epic: E01-infrastructure
+title: Monorepo Foundation
+description: pnpm workspace, root config, shared TypeScript types
+status: pending
+merge: null
+tasks:
+  - id: T001
+    title: Initialize pnpm monorepo
+    description: pnpm-workspace.yaml, root package.json, .gitignore
+    status: pending
+    commit: null
+
+  - id: T002
+    title: Create shared types package
+    description: packages/shared — Transaction, Tag, ParseResult, ClarificationResult, ParseRequest, isClarification
+    status: pending
+    commit: null

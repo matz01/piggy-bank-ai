@@ -1,0 +1,24 @@
+id: S02
+epic: E02-backend
+title: Backend API
+description: Hono server + Vercel AI SDK parser agent + POST /parse endpoint
+status: pending
+merge: null
+tasks:
+  - id: T003
+    title: Hono server skeleton
+    description: apps/api — package.json, tsconfig, app.ts (exported Hono app), index.ts (serve entry)
+    status: pending
+    commit: null
+
+  - id: T004
+    title: Parser agent with structured output
+    description: providers/llm.ts (hardcoded Anthropic) + agents/parserAgent.ts + tests
+    status: pending
+    commit: null
+
+  - id: T005
+    title: POST /parse route
+    description: routes/parse.ts — validates body, calls parseExpense, returns ParseResult or ClarificationResult. Tests via Hono app.request()
+    status: pending
+    commit: null
