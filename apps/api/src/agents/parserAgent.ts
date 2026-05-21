@@ -1,14 +1,27 @@
-import { generateObject } from 'ai';
+import { generateText } from 'ai';
 import { z } from 'zod';
 import { defaultModel } from '../providers/llm.js';
 import type { ParseResponse } from '@pbai/shared';
 
 const ParseSchema = z.object({
-  titolo: z.string().describe('Nome della spesa'),
-  importo: z.number().nullable().describe('Importo in euro. null se non specificato'),
-  tag: z.array(z.string()).describe('Categorie lowercase, es. ["bar", "cibo"]'),
-  clarification: z.string().nullable().describe('Domanda da porre se importo è null, altrimenti null'),
+  titolo: z.string(),
+  importo: z.number().nullable(),
+  tag: z.array(z.string()),
+  clarification: z.string().nullable(),
 });
+
+const SYSTEM = `Sei un assistente per il tracciamento delle spese personali.
+Rispondi SOLO con un oggetto JSON valido, senza markdown, con questi campi:
+- titolo: string (nome della spesa)
+- importo: number oppure null (importo in euro, null se non specificato)
+- tag: array di stringhe lowercase (categorie, es. ["bar", "cibo"])
+- clarification: string oppure null (domanda se importo è null, altrimenti null)`;
+
+function extractJson(text: string): unknown {
+  const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const raw = codeBlock ? codeBlock[1] : text;
+  return JSON.parse(raw.trim());
+}
 
 export async function parseExpense(
   text: string,
@@ -19,13 +32,14 @@ export async function parseExpense(
       ? `Informazioni già note: ${JSON.stringify(partial)}. L'utente ha aggiunto: "${text}". Completa i dati mancanti.`
       : `Estrai i dati di questa spesa: "${text}"`;
 
-  const { object } = await generateObject({
+  const { text: raw } = await generateText({
     model: defaultModel,
-    schema: ParseSchema,
-    system:
-      'Sei un assistente per il tracciamento delle spese personali. Estrai titolo, importo e categorie da descrizioni in italiano.',
+    system: SYSTEM,
     prompt,
+    maxRetries: 0,
   });
+
+  const object = ParseSchema.parse(extractJson(raw));
 
   if (object.importo === null) {
     return { clarification: object.clarification ?? "Puoi specificare l'importo?" };

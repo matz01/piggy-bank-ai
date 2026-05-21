@@ -1,3 +1,8 @@
-import { anthropic } from '@ai-sdk/anthropic';
+import { createOpenAI } from '@ai-sdk/openai';
 
-export const defaultModel = anthropic('claude-sonnet-4-6');
+const github = createOpenAI({
+  baseURL: 'https://models.github.ai/inference',
+  apiKey: process.env.GITHUB_TOKEN,
+});
+
+export const defaultModel = github('openai/gpt-4o-mini');
