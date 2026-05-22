@@ -2,6 +2,7 @@ import { generateText } from 'ai';
 import { z } from 'zod';
 import { defaultModel } from '../providers/llm.js';
 import type { QueryResult } from '@pbai/shared';
+import { extractJson } from './utils.js';
 
 const QuerySchema = z.object({
   tag_ids: z.array(z.string()),
@@ -9,12 +10,6 @@ const QuerySchema = z.object({
   date_to: z.number(),
   clarification: z.string().nullable(),
 });
-
-function extractJson(text: string): unknown {
-  const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const raw = codeBlock ? codeBlock[1] : text;
-  return JSON.parse(raw.trim());
-}
 
 function buildSystem(tags: string[], today: number): string {
   return `Sei un assistente per l'analisi delle finanze personali.

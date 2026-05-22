@@ -2,6 +2,7 @@ import { generateText } from 'ai';
 import { z } from 'zod';
 import { defaultModel } from '../providers/llm.js';
 import type { ParseResponse } from '@pbai/shared';
+import { extractJson } from './utils.js';
 
 const ParseSchema = z.object({
   titolo: z.string(),
@@ -16,12 +17,6 @@ Rispondi SOLO con un oggetto JSON valido, senza markdown, con questi campi:
 - importo: number oppure null (importo in euro, null se non specificato)
 - tag: array di stringhe lowercase (categorie, es. ["bar", "cibo"])
 - clarification: string oppure null (domanda se importo è null, altrimenti null)`;
-
-function extractJson(text: string): unknown {
-  const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const raw = codeBlock ? codeBlock[1] : text;
-  return JSON.parse(raw.trim());
-}
 
 export async function parseExpense(
   text: string,
