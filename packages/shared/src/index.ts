@@ -27,6 +27,7 @@ export type ParseResponse = ParseResult | ClarificationResult;
 export interface ParseRequest {
   text: string;
   partial?: Partial<Pick<ParseResult, 'titolo' | 'importo' | 'tag'>>;
+  mode?: 'expense' | 'income';
 }
 
 export function isClarification(r: ParseResponse): r is ClarificationResult {

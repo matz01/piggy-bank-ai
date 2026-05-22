@@ -41,4 +41,16 @@ describe('parse', () => {
 
     expect(result).toEqual({ clarification: 'Quanto hai speso?' });
   });
+
+  it('includes mode in body when provided', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: async () => ({ titolo: 'Caffè', importo: 1.5, tag: ['bar'] }),
+    } as Response);
+
+    await parse({ text: 'caffè', mode: 'expense' });
+
+    const [, options] = vi.mocked(fetch).mock.calls[0];
+    const body = JSON.parse((options as RequestInit).body as string);
+    expect(body.mode).toBe('expense');
+  });
 });
