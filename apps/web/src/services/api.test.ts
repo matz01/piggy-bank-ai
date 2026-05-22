@@ -53,4 +53,17 @@ describe('parse', () => {
     const body = JSON.parse((options as RequestInit).body as string);
     expect(body.mode).toBe('expense');
   });
+
+  it('includes tags and today in body when provided', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: async () => ({ tag_ids: ['bar'], date_from: 0, date_to: 1 }),
+    } as Response);
+
+    await parse({ text: 'test', tags: ['bar', 'cibo'], today: 9999 });
+
+    const [, options] = vi.mocked(fetch).mock.calls[0];
+    const body = JSON.parse((options as RequestInit).body as string);
+    expect(body.tags).toEqual(['bar', 'cibo']);
+    expect(body.today).toBe(9999);
+  });
 });
