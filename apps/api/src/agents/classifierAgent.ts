@@ -11,6 +11,7 @@ export async function classifyIntent(text: string): Promise<{ intent: 'expense' 
     model: defaultModel,
     system: SYSTEM,
     prompt: text,
+    maxTokens: 10,
     maxRetries: 0,
   });
   const intent = raw.trim().toLowerCase();
