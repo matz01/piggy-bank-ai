@@ -1,0 +1,24 @@
+id: S03
+epic: E03-frontend
+title: Frontend Foundation
+description: Vite + React + Tailwind scaffold, IndexedDB service, Zustand session store
+status: pending
+merge: null
+tasks:
+  - id: T006
+    title: Vite + React + Tailwind + shadcn/ui setup
+    description: apps/web scaffold, Tailwind config, Vitest + Testing Library, test-setup.ts
+    status: pending
+    commit: null
+
+  - id: T007
+    title: IndexedDB service
+    description: services/db.ts — openDB, getTag, saveTag, resolveAndSaveTags, saveTransaction. Tests with fake-indexeddb
+    status: pending
+    commit: null
+
+  - id: T008
+    title: Zustand session store
+    description: store/sessionStore.ts — states idle|recording|processing|preview|clarification, partial, clarification, reset
+    status: pending
+    commit: null

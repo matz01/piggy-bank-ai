@@ -1,0 +1,17 @@
+{
+  "name": "pbai",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm -w @pbai/web run dev",
+    "dev:api": "npm -w @pbai/api run dev",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

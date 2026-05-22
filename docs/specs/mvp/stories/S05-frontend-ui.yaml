@@ -1,0 +1,30 @@
+id: S05
+epic: E03-frontend
+title: Frontend UI
+description: UI components and App.tsx session orchestration
+status: pending
+merge: null
+tasks:
+  - id: T011
+    title: MicButton component
+    description: Hold-to-record button — states idle|recording|processing|preview|clarification. onPointerDown/Up handlers. Tests with @testing-library
+    status: pending
+    commit: null
+
+  - id: T012
+    title: TagChips component
+    description: AI-suggested tags pre-selected, tap to toggle. onChange receives updated selected array
+    status: pending
+    commit: null
+
+  - id: T013
+    title: TransactionPreview and ClarificationPrompt
+    description: TransactionPreview shows titolo + importo (€ X.XX). ClarificationPrompt shows AI question
+    status: pending
+    commit: null
+
+  - id: T014
+    title: App.tsx integration
+    description: Full session orchestration — mic press → transcribe → parse → preview|clarification → OK saves to IndexedDB → reset. X cancels
+    status: pending
+    commit: null
