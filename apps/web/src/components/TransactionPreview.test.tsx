@@ -21,4 +21,9 @@ describe('TransactionPreview', () => {
     expect(container.textContent).toContain('12');
     expect(container.textContent).toContain('.00');
   });
+
+  it('renders income sign for income mode', () => {
+    const { container } = render(<TransactionPreview titolo="Stipendio" importo={1500} mode="income" />);
+    expect(container.textContent).toContain('+');
+  });
 });
