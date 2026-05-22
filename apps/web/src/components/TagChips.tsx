@@ -18,11 +18,14 @@ export function TagChips({ tags, selected, onChange }: Props) {
         <button
           key={tag}
           onClick={() => toggle(tag)}
-          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-            selected.includes(tag)
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-200 text-gray-500 line-through'
+          className={`px-3 py-1 rounded-full font-ui text-[9px] uppercase tracking-widest transition-all ${
+            !selected.includes(tag) ? 'line-through' : ''
           }`}
+          style={
+            selected.includes(tag)
+              ? { background: 'rgba(176,125,72,.10)', border: '1px solid rgba(176,125,72,.35)', color: '#b07d48' }
+              : { border: '1px solid #e8d8c4', color: '#c9b8a8' }
+          }
         >
           {tag}
         </button>
