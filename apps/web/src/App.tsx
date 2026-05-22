@@ -5,6 +5,7 @@ import { parse } from './services/api.js';
 import { saveTransaction, resolveAndSaveTags } from './services/db.js';
 import { isClarification } from '@pbai/shared';
 import { MicButton } from './components/MicButton.js';
+import { ModeSwitch } from './components/ModeSwitch.js';
 import { TagChips } from './components/TagChips.js';
 import { TransactionPreview } from './components/TransactionPreview.js';
 import { ClarificationPrompt } from './components/ClarificationPrompt.js';
@@ -13,6 +14,7 @@ export default function App() {
   const session = useSession();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [stopRecognition, setStopRecognition] = useState<(() => void) | null>(null);
+  const [mode, setMode] = useState<'expense' | 'income'>('expense');
 
   const handleMicPress = useCallback(() => {
     if (session.state === 'processing') return;
@@ -26,6 +28,7 @@ export default function App() {
         const response = await parse({
           text: transcript,
           partial: session.partial ?? undefined,
+          mode,
         });
 
         if (isClarification(response)) {
@@ -47,7 +50,7 @@ export default function App() {
     });
 
     setStopRecognition(() => stop);
-  }, [session]);
+  }, [session, mode]);
 
   const handleMicRelease = useCallback(() => {
     stopRecognition?.();
@@ -67,63 +70,138 @@ export default function App() {
 
     session.reset();
     setSelectedTags([]);
+    setMode('expense');
   }, [session, selectedTags]);
 
   const handleCancel = useCallback(() => {
     stopRecognition?.();
     session.reset();
     setSelectedTags([]);
+    setMode('expense');
   }, [session, stopRecognition]);
 
   const hasPartial = session.state === 'preview' || session.state === 'clarification';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-between p-6 max-w-sm mx-auto">
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 w-full">
+    <div
+      className="min-h-screen flex flex-col items-center max-w-sm mx-auto font-ui"
+      style={{
+        background: '#fdf8f2',
+        backgroundImage: 'radial-gradient(ellipse at 50% 85%, rgba(176,125,72,.04) 0%, transparent 70%)',
+      }}
+    >
+      {/* Status dot */}
+      <div className="flex items-center gap-2 pt-4 px-6 self-start h-8">
+        <div
+          className={`w-1.5 h-1.5 rounded-full ${
+            session.state === 'recording' ? 'bg-pbai-expense animate-pulse' : 'bg-pbai-dim'
+          }`}
+        />
+        <span className="font-ui text-[10px] uppercase tracking-widest text-pbai-dim">
+          {session.state}
+        </span>
+      </div>
+
+      {/* Mode switch */}
+      <div className="mt-3">
+        <ModeSwitch mode={mode} onChange={setMode} />
+      </div>
+
+      {/* Content area */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 w-full px-6">
+        {session.state === 'idle' && (
+          <p className="font-ui text-[11px] uppercase tracking-widest text-pbai-dim text-center leading-relaxed">
+            Tieni premuto il microfono<br />per registrare una spesa
+          </p>
+        )}
+
+        {session.state === 'recording' && (
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-pbai-expense animate-pulse" />
+            <span className="font-ui text-[11px] uppercase tracking-widest text-pbai-muted">
+              In ascolto
+            </span>
+          </div>
+        )}
+
+        {session.state === 'processing' && (
+          <p className="font-ui text-[11px] uppercase tracking-widest text-pbai-dim">Elaboro</p>
+        )}
+
         {session.state === 'preview' && session.partial?.titolo && session.partial?.importo != null && (
           <>
-            <TransactionPreview titolo={session.partial.titolo} importo={session.partial.importo} />
-            <TagChips tags={session.partial.tag ?? []} selected={selectedTags} onChange={setSelectedTags} />
+            <TransactionPreview
+              titolo={session.partial.titolo}
+              importo={session.partial.importo}
+              mode={mode}
+            />
+            <TagChips
+              tags={session.partial.tag ?? []}
+              selected={selectedTags}
+              onChange={setSelectedTags}
+            />
           </>
         )}
 
         {session.state === 'clarification' && session.clarification && (
           <ClarificationPrompt question={session.clarification} />
         )}
-
-        {session.state === 'idle' && (
-          <p className="text-gray-400 text-sm">Tieni premuto il microfono per registrare una spesa</p>
-        )}
       </div>
 
-      <div className="flex items-center justify-between w-full max-w-xs mt-8">
-        <button
-          onClick={handleCancel}
-          disabled={!hasPartial}
-          className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-opacity ${
-            hasPartial ? 'text-red-500 bg-red-50' : 'opacity-0 pointer-events-none'
-          }`}
-          aria-label="Annulla"
-        >
-          ✕
-        </button>
+      {/* Controls */}
+      <div className="flex items-center justify-center w-full pb-12">
+        {hasPartial ? (
+          <div className="flex items-center justify-between w-full max-w-xs px-8">
+            <button
+              onClick={handleCancel}
+              aria-label="Annulla"
+              className="w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-95"
+              style={{ border: '1.5px solid #e8d8c4' }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5 text-pbai-dim"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" />
+              </svg>
+            </button>
 
-        <MicButton
-          sessionState={session.state}
-          onPress={handleMicPress}
-          onRelease={handleMicRelease}
-        />
-
-        <button
-          onClick={handleOk}
-          disabled={session.state !== 'preview'}
-          className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-opacity ${
-            session.state === 'preview' ? 'text-green-600 bg-green-50' : 'opacity-0 pointer-events-none'
-          }`}
-          aria-label="Salva"
-        >
-          ✓
-        </button>
+            <button
+              onClick={handleOk}
+              disabled={session.state !== 'preview'}
+              aria-label="Salva"
+              className="w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-30"
+              style={{
+                border: session.state === 'preview' ? '1.5px solid #b07d48' : '1.5px solid #e8d8c4',
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`w-5 h-5 ${session.state === 'preview' ? 'text-pbai-accent' : 'text-pbai-dim'}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <MicButton
+            sessionState={session.state}
+            onPress={handleMicPress}
+            onRelease={handleMicRelease}
+          />
+        )}
       </div>
     </div>
   );
