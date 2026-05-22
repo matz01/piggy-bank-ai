@@ -40,4 +40,17 @@ describe('parseExpense', () => {
     expect((call[0] as any).prompt).toContain('Caffè');
     expect((call[0] as any).prompt).toContain('due euro');
   });
+
+  it('uses a neutral system prompt valid for both expenses and income', async () => {
+    vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
+      text: JSON.stringify({ titolo: 'Stipendio', importo: 2000, tag: ['lavoro'], clarification: null }),
+    } as any);
+
+    await parseExpense('stipendio 2000');
+
+    const [call] = vi.mocked(aiSdk.generateText).mock.calls;
+    const system: string = (call[0] as any).system;
+    expect(system).not.toMatch(/\bspese personali\b/i);
+    expect(system).toMatch(/finanze|operazion/i);
+  });
 });

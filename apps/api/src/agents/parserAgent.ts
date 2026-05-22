@@ -10,9 +10,9 @@ const ParseSchema = z.object({
   clarification: z.string().nullable(),
 });
 
-const SYSTEM = `Sei un assistente per il tracciamento delle spese personali.
+const SYSTEM = `Sei un assistente per il tracciamento delle finanze personali.
 Rispondi SOLO con un oggetto JSON valido, senza markdown, con questi campi:
-- titolo: string (nome della spesa)
+- titolo: string (nome dell'operazione)
 - importo: number oppure null (importo in euro, null se non specificato)
 - tag: array di stringhe lowercase (categorie, es. ["bar", "cibo"])
 - clarification: string oppure null (domanda se importo è null, altrimenti null)`;
