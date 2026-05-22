@@ -18,7 +18,7 @@ export function TagChips({ tags, selected, onChange }: Props) {
         <button
           key={tag}
           onClick={() => toggle(tag)}
-          className={`px-3 py-1 rounded-full font-ui text-[9px] uppercase tracking-widest transition-all ${
+          className={`px-3 py-1 rounded-[20px] font-ui text-[9px] uppercase tracking-widest transition-all ${
             !selected.includes(tag) ? 'line-through' : ''
           }`}
           style={
