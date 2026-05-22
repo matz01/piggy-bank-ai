@@ -15,8 +15,9 @@ export function QueryResultView({ queryResult, onDetail }: Props) {
   }, [queryResult.tag_ids, queryResult.date_from, queryResult.date_to]);
 
   const total = transactions.reduce((sum, t) => sum + t.importo, 0);
-  const intPart = Math.floor(Math.abs(total));
-  const decPart = Math.round((Math.abs(total) % 1) * 100).toString().padStart(2, '0');
+  const rounded = Math.round(Math.abs(total) * 100);
+  const intPart = Math.floor(rounded / 100);
+  const decPart = (rounded % 100).toString().padStart(2, '0');
 
   return (
     <div className="flex flex-col items-center gap-4 animate-fade-up">

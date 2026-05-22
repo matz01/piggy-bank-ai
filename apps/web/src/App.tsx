@@ -27,25 +27,30 @@ export default function App() {
       onResult: async (transcript) => {
         session.setState('processing');
 
-        const tags = await readAllTagIds();
-        const response = await parse({
-          text: transcript,
-          partial: session.partial ?? undefined,
-          mode,
-          tags,
-          today: Date.now(),
-        });
+        try {
+          const tags = await readAllTagIds();
+          const response = await parse({
+            text: transcript,
+            partial: session.partial ?? undefined,
+            mode,
+            tags,
+            today: Date.now(),
+          });
 
-        if (isQueryResult(response)) {
-          session.setQueryResult(response);
-          session.setState('query_result');
-        } else if (isClarification(response)) {
-          session.setClarification(response.clarification);
-          session.setState('clarification');
-        } else {
-          session.setPartial(response);
-          setSelectedTags(response.tag);
-          session.setState('preview');
+          if (isQueryResult(response)) {
+            session.setQueryResult(response);
+            session.setState('query_result');
+          } else if (isClarification(response)) {
+            session.setClarification(response.clarification);
+            session.setState('clarification');
+          } else {
+            session.setPartial(response);
+            setSelectedTags(response.tag);
+            session.setState('preview');
+          }
+        } catch (err) {
+          console.error('Parse error:', err);
+          session.setState('idle');
         }
       },
       onEnd: () => {
