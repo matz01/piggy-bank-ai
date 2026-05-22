@@ -111,4 +111,19 @@ describe('POST /parse', () => {
     expect(today).toBeGreaterThanOrEqual(before);
     expect(today).toBeLessThanOrEqual(after);
   });
+
+  it('falls back to expense intent when classifier throws', async () => {
+    vi.mocked(classifyIntent).mockRejectedValueOnce(new Error('LLM timeout'));
+    vi.mocked(parseExpense).mockResolvedValueOnce({ titolo: 'Caffè', importo: 1.5, tag: ['bar'] });
+
+    const res = await app.request('/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'caffè 1.50' }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ titolo: 'Caffè', importo: 1.5, tag: ['bar'] });
+    expect(queryExpenses).not.toHaveBeenCalled();
+  });
 });

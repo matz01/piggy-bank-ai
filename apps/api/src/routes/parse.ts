@@ -13,7 +13,12 @@ app.post('/', async (c) => {
     return c.json({ error: 'text is required' }, 400);
   }
 
-  const { intent } = await classifyIntent(body.text);
+  let intent: 'expense' | 'query' = 'expense';
+  try {
+    ({ intent } = await classifyIntent(body.text));
+  } catch {
+    // classifier failure: fall back to expense intent
+  }
 
   if (intent === 'query') {
     const result = await queryExpenses(body.text, body.tags ?? [], body.today ?? Date.now());
