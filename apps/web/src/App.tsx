@@ -2,13 +2,15 @@ import { useState, useCallback } from 'react';
 import { useSession } from './store/sessionStore.js';
 import { startTranscription } from './services/speech.js';
 import { parse } from './services/api.js';
-import { saveTransaction, resolveAndSaveTags } from './services/db.js';
-import { isClarification } from '@pbai/shared';
+import { saveTransaction, resolveAndSaveTags, readAllTagIds } from './services/db.js';
+import { isClarification, isQueryResult } from '@pbai/shared';
 import { MicButton } from './components/MicButton.js';
 import { ModeSwitch } from './components/ModeSwitch.js';
 import { TagChips } from './components/TagChips.js';
 import { TransactionPreview } from './components/TransactionPreview.js';
 import { ClarificationPrompt } from './components/ClarificationPrompt.js';
+import { QueryResultView } from './components/QueryResultView.js';
+import { QueryDetailView } from './components/QueryDetailView.js';
 
 export default function App() {
   const session = useSession();
@@ -25,19 +27,30 @@ export default function App() {
       onResult: async (transcript) => {
         session.setState('processing');
 
-        const response = await parse({
-          text: transcript,
-          partial: session.partial ?? undefined,
-          mode,
-        });
+        try {
+          const tags = await readAllTagIds();
+          const response = await parse({
+            text: transcript,
+            partial: session.partial ?? undefined,
+            mode,
+            tags,
+            today: Date.now(),
+          });
 
-        if (isClarification(response)) {
-          session.setClarification(response.clarification);
-          session.setState('clarification');
-        } else {
-          session.setPartial(response);
-          setSelectedTags(response.tag);
-          session.setState('preview');
+          if (isQueryResult(response)) {
+            session.setQueryResult(response);
+            session.setState('query_result');
+          } else if (isClarification(response)) {
+            session.setClarification(response.clarification);
+            session.setState('clarification');
+          } else {
+            session.setPartial(response);
+            setSelectedTags(response.tag);
+            session.setState('preview');
+          }
+        } catch (err) {
+          console.error('Parse error:', err);
+          session.setState('idle');
         }
       },
       onEnd: () => {
@@ -80,7 +93,7 @@ export default function App() {
     setMode('expense');
   }, [session, stopRecognition]);
 
-  const hasPartial = session.state === 'preview' || session.state === 'clarification';
+  const showActions = session.state === 'preview' || session.state === 'clarification';
 
   return (
     <div
@@ -146,11 +159,25 @@ export default function App() {
         {session.state === 'clarification' && session.clarification && (
           <ClarificationPrompt question={session.clarification} />
         )}
+
+        {session.state === 'query_result' && session.queryResult && (
+          <QueryResultView
+            queryResult={session.queryResult}
+            onDetail={() => session.setState('query_detail')}
+          />
+        )}
+
+        {session.state === 'query_detail' && session.queryResult && (
+          <QueryDetailView
+            queryResult={session.queryResult}
+            onBack={() => session.setState('query_result')}
+          />
+        )}
       </div>
 
       {/* Controls */}
       <div className="flex items-center justify-center w-full pb-12">
-        {hasPartial ? (
+        {showActions ? (
           <div className="flex items-center justify-between w-full max-w-xs px-8">
             <button
               onClick={handleCancel}

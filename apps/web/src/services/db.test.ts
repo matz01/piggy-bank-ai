@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
-import { saveTransaction, getTag, saveTag, resolveAndSaveTags } from './db.js';
+import { saveTransaction, getTag, saveTag, resolveAndSaveTags, readAllTagIds, queryTransactions } from './db.js';
 import type { Transaction, Tag } from '@pbai/shared';
 
 beforeEach(() => {
@@ -49,5 +49,54 @@ describe('saveTransaction', () => {
     };
     const id = await saveTransaction(tx);
     expect(id).toBe('test-id-1');
+  });
+});
+
+describe('readAllTagIds', () => {
+  it('returns empty array when no tags exist', async () => {
+    const ids = await readAllTagIds();
+    expect(ids).toEqual([]);
+  });
+
+  it('returns all saved tag ids', async () => {
+    await saveTag({ id: 'bar', nome: 'Bar', frequenza_uso: 1 });
+    await saveTag({ id: 'cibo', nome: 'Cibo', frequenza_uso: 2 });
+    const ids = await readAllTagIds();
+    expect(ids.sort()).toEqual(['bar', 'cibo']);
+  });
+});
+
+describe('queryTransactions', () => {
+  it('returns transactions matching tag and date range', async () => {
+    const t1: Transaction = { id: 'q1', titolo: 'Negroni', importo: 8, data: 500, tag_ids: ['bar'] };
+    const t2: Transaction = { id: 'q2', titolo: 'Pizza', importo: 12, data: 500, tag_ids: ['cibo'] };
+    await saveTransaction(t1);
+    await saveTransaction(t2);
+
+    const result = await queryTransactions(['bar'], 0, 1000);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('q1');
+  });
+
+  it('returns all transactions when tag_ids is empty', async () => {
+    const t1: Transaction = { id: 'qa', titolo: 'A', importo: 1, data: 500, tag_ids: ['bar'] };
+    const t2: Transaction = { id: 'qb', titolo: 'B', importo: 2, data: 500, tag_ids: ['cibo'] };
+    await saveTransaction(t1);
+    await saveTransaction(t2);
+
+    const result = await queryTransactions([], 0, 1000);
+    expect(result.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('excludes transactions outside the date range', async () => {
+    const t1: Transaction = { id: 'qc', titolo: 'Early', importo: 1, data: 100, tag_ids: ['bar'] };
+    const t2: Transaction = { id: 'qd', titolo: 'Late', importo: 2, data: 900, tag_ids: ['bar'] };
+    await saveTransaction(t1);
+    await saveTransaction(t2);
+
+    const result = await queryTransactions(['bar'], 200, 1000);
+    const ids = result.map((t) => t.id);
+    expect(ids).toContain('qd');
+    expect(ids).not.toContain('qc');
   });
 });

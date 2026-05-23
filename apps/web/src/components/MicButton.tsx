@@ -1,5 +1,5 @@
 interface Props {
-  sessionState: 'idle' | 'recording' | 'processing' | 'preview' | 'clarification';
+  sessionState: 'idle' | 'recording' | 'processing' | 'preview' | 'clarification' | 'query_result' | 'query_detail';
   onPress: () => void;
   onRelease: () => void;
 }

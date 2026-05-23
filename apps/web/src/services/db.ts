@@ -58,3 +58,26 @@ export async function saveTransaction(transaction: Transaction): Promise<string>
   await idbRequest(tx.objectStore('spese').put(transaction));
   return transaction.id;
 }
+
+export async function readAllTagIds(): Promise<string[]> {
+  const db = await openDB();
+  const tx = db.transaction('tag', 'readonly');
+  const keys = await idbRequest<IDBValidKey[]>(tx.objectStore('tag').getAllKeys());
+  return keys as string[];
+}
+
+export async function queryTransactions(
+  tag_ids: string[],
+  date_from: number,
+  date_to: number
+): Promise<Transaction[]> {
+  const db = await openDB();
+  const tx = db.transaction('spese', 'readonly');
+  const all = await idbRequest<Transaction[]>(tx.objectStore('spese').getAll());
+  return all.filter(
+    (t) =>
+      t.data >= date_from &&
+      t.data <= date_to &&
+      (tag_ids.length === 0 || tag_ids.some((id) => t.tag_ids.includes(id)))
+  );
+}

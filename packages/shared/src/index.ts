@@ -22,14 +22,26 @@ export interface ClarificationResult {
   clarification: string;
 }
 
-export type ParseResponse = ParseResult | ClarificationResult;
+export interface QueryResult {
+  tag_ids: string[];
+  date_from: number;
+  date_to: number;
+}
+
+export type ParseResponse = ParseResult | ClarificationResult | QueryResult;
 
 export interface ParseRequest {
   text: string;
   partial?: Partial<Pick<ParseResult, 'titolo' | 'importo' | 'tag'>>;
   mode?: 'expense' | 'income';
+  tags?: string[];
+  today?: number;
 }
 
 export function isClarification(r: ParseResponse): r is ClarificationResult {
   return 'clarification' in r;
+}
+
+export function isQueryResult(r: ParseResponse): r is QueryResult {
+  return 'tag_ids' in r;
 }
