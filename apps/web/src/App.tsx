@@ -12,11 +12,18 @@ import { ClarificationPrompt } from './components/ClarificationPrompt.js';
 import { QueryResultView } from './components/QueryResultView.js';
 import { QueryDetailView } from './components/QueryDetailView.js';
 
+// DEBUG — remove before final release
+const API_URL = (import.meta as unknown as { env: Record<string, string> }).env.VITE_API_URL ?? '(not set)';
+
 export default function App() {
   const session = useSession();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [stopRecognition, setStopRecognition] = useState<(() => void) | null>(null);
   const [mode, setMode] = useState<'expense' | 'income'>('expense');
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+
+  const dbg = (msg: string) =>
+    setDebugLog((prev) => [`${new Date().toISOString().slice(11, 19)} ${msg}`, ...prev].slice(0, 8));
 
   const handleMicPress = useCallback(() => {
     if (session.state === 'processing') return;
@@ -26,9 +33,11 @@ export default function App() {
     const stop = startTranscription({
       onResult: async (transcript) => {
         session.setState('processing');
+        dbg(`transcript: "${transcript.slice(0, 40)}"`);
 
         try {
           const tags = await readAllTagIds();
+          dbg(`tags: [${tags.slice(0, 3).join(', ')}]`);
           const response = await parse({
             text: transcript,
             partial: session.partial ?? undefined,
@@ -36,6 +45,7 @@ export default function App() {
             tags,
             today: Date.now(),
           });
+          dbg(`response: ${JSON.stringify(response).slice(0, 60)}`);
 
           if (isQueryResult(response)) {
             session.setQueryResult(response);
@@ -49,6 +59,8 @@ export default function App() {
             session.setState('preview');
           }
         } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          dbg(`ERR: ${msg.slice(0, 80)}`);
           console.error('Parse error:', err);
           session.setState('idle');
         }
@@ -57,6 +69,7 @@ export default function App() {
         if (session.state === 'recording') session.setState('processing');
       },
       onError: (err) => {
+        dbg(`speech ERR: ${String(err).slice(0, 60)}`);
         console.error('Speech error:', err);
         session.setState('idle');
       },
@@ -229,6 +242,18 @@ export default function App() {
             onRelease={handleMicRelease}
           />
         )}
+      </div>
+      {/* DEBUG BOX — remove before release */}
+      <div
+        className="w-full px-4 pb-4 text-[10px] font-mono"
+        style={{ color: '#888', borderTop: '1px solid #e8d8c4', background: '#fdf8f2' }}
+      >
+        <div className="pt-2 pb-1 font-bold">DEBUG</div>
+        <div>api: {API_URL}</div>
+        <div>state: {session.state}</div>
+        {debugLog.map((line, i) => (
+          <div key={i}>{line}</div>
+        ))}
       </div>
     </div>
   );
