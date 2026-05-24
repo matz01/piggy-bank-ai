@@ -29,6 +29,16 @@ describe('parseExpense', () => {
     expect(result).toEqual({ clarification: 'Quanto hai speso?', partial: { titolo: 'Caffè', tag: ['bar'] } });
   });
 
+  it('returns ClarificationResult when titolo is null', async () => {
+    vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
+      text: JSON.stringify({ titolo: null, importo: 1, tag: [], clarification: 'Per cosa hai speso?' }),
+    } as any);
+
+    const result = await parseExpense('ho speso un euro');
+
+    expect(result).toEqual({ clarification: 'Per cosa hai speso?', partial: { importo: 1, tag: [] } });
+  });
+
   it('includes partial in prompt when provided', async () => {
     vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
       text: JSON.stringify({ titolo: 'Caffè', importo: 2.0, tag: ['bar'], clarification: null }),

@@ -5,7 +5,7 @@ import type { ParseResponse } from '@pbai/shared';
 import { extractJson } from './utils.js';
 
 const ParseSchema = z.object({
-  titolo: z.string(),
+  titolo: z.string().nullable(),
   importo: z.number().nullable(),
   tag: z.array(z.string()),
   clarification: z.string().nullable(),
@@ -13,10 +13,10 @@ const ParseSchema = z.object({
 
 const SYSTEM = `Sei un assistente per il tracciamento delle finanze personali.
 Rispondi SOLO con un oggetto JSON valido, senza markdown, con questi campi:
-- titolo: string (nome dell'operazione)
+- titolo: string oppure null (nome dell'operazione, null se non specificato)
 - importo: number oppure null (importo in euro, null se non specificato)
 - tag: array di stringhe lowercase (categorie, es. ["bar", "cibo"])
-- clarification: string oppure null (domanda se importo è null, altrimenti null)`;
+- clarification: string oppure null (domanda se titolo o importo sono null, altrimenti null)`;
 
 export async function parseExpense(
   text: string,
@@ -39,7 +39,14 @@ export async function parseExpense(
   if (object.importo === null) {
     return {
       clarification: object.clarification ?? "Puoi specificare l'importo?",
-      partial: { titolo: object.titolo, tag: object.tag },
+      partial: { titolo: object.titolo ?? undefined, tag: object.tag },
+    };
+  }
+
+  if (!object.titolo) {
+    return {
+      clarification: object.clarification ?? 'Per cosa hai speso?',
+      partial: { importo: object.importo, tag: object.tag },
     };
   }
 
