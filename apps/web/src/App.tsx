@@ -28,6 +28,7 @@ export default function App() {
   const handleMicPress = useCallback(() => {
     if (session.state === 'processing' || session.state === 'recording') return;
 
+    dbg('mic press');
     session.setState('recording');
 
     const stop = startTranscription({
@@ -64,7 +65,9 @@ export default function App() {
         }
       },
       onEnd: () => {
-        if (useSession.getState().state === 'recording') useSession.getState().setState('idle');
+        const s = useSession.getState().state;
+        dbg(`onEnd state=${s}`);
+        if (s === 'recording') useSession.getState().setState('idle');
       },
       onError: (err) => {
         console.error('Speech error:', err);
