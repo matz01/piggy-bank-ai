@@ -11,12 +11,14 @@ import { TransactionPreview } from './components/TransactionPreview.js';
 import { ClarificationPrompt } from './components/ClarificationPrompt.js';
 import { QueryResultView } from './components/QueryResultView.js';
 import { QueryDetailView } from './components/QueryDetailView.js';
+import { SalvatoExplosion } from './components/SalvatoExplosion.js';
 
 export default function App() {
   const session = useSession();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [stopRecognition, setStopRecognition] = useState<(() => void) | null>(null);
   const [mode, setMode] = useState<'expense' | 'income'>('expense');
+  const [showExplosion, setShowExplosion] = useState(false);
 
   const handleMicPress = useCallback(() => {
     if (session.state === 'processing') return;
@@ -79,10 +81,15 @@ export default function App() {
       tag_ids,
     });
 
+    setShowExplosion(true);
+  }, [session, selectedTags]);
+
+  const handleExplosionDone = useCallback(() => {
+    setShowExplosion(false);
     session.reset();
     setSelectedTags([]);
     setMode('expense');
-  }, [session, selectedTags]);
+  }, [session]);
 
   const handleCancel = useCallback(() => {
     stopRecognition?.();
@@ -171,6 +178,8 @@ export default function App() {
           />
         )}
       </div>
+
+      {showExplosion && <SalvatoExplosion onDone={handleExplosionDone} />}
 
       {/* Controls */}
       <div className="flex items-center justify-center w-full pb-12">
