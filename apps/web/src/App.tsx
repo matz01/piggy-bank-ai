@@ -70,6 +70,7 @@ export default function App() {
   }, [stopRecognition]);
 
   const handleOk = useCallback(async () => {
+    if (showExplosion) return;
     if (!session.partial?.titolo || session.partial?.importo == null) return;
 
     const tag_ids = await resolveAndSaveTags(selectedTags);
@@ -82,7 +83,7 @@ export default function App() {
     });
 
     setShowExplosion(true);
-  }, [session, selectedTags]);
+  }, [session, selectedTags, showExplosion]);
 
   const handleExplosionDone = useCallback(() => {
     setShowExplosion(false);
