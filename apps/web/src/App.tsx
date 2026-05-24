@@ -97,7 +97,7 @@ export default function App() {
     <div
       className="min-h-screen flex flex-col items-center max-w-sm mx-auto font-ui"
       style={{
-        background: 'radial-gradient(ellipse at center, #f8f6f3 0%, #e4ddd5 100%)',
+        background: 'radial-gradient(ellipse at center, #fafafa 0%, #e8e8e8 100%)',
       }}
     >
       {/* Status dot */}

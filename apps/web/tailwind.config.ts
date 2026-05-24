@@ -6,13 +6,13 @@ export default {
     extend: {
       colors: {
         pbai: {
-          bg: '#f5f3f0',
-          text: '#1c1a18',
-          muted: '#7a746d',
-          dim: '#b2aba3',
-          border: '#d6d0c8',
-          track: '#e5dfd8',
-          surface: '#f5f3f0',
+          bg: '#fafafa',
+          text: '#1a1a1a',
+          muted: '#757575',
+          dim: '#b0b0b0',
+          border: '#d8d8d8',
+          track: '#e8e8e8',
+          surface: '#fafafa',
           accent: '#c9a84c',
           expense: '#c0392b',
           income: '#27ae60',
