@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { parse } from './api.js';
+import { parse, transcribe } from './api.js';
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn());
@@ -65,5 +65,46 @@ describe('parse', () => {
     const body = JSON.parse((options as RequestInit).body as string);
     expect(body.tags).toEqual(['bar', 'cibo']);
     expect(body.today).toBe(9999);
+  });
+});
+
+describe('transcribe', () => {
+  it('sends audio blob as form-data to /transcribe', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ text: 'caffè uno cinquanta' }),
+    } as Response);
+
+    const blob = new Blob(['audio'], { type: 'audio/webm' });
+    const result = await transcribe(blob);
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/transcribe'),
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(result).toBe('caffè uno cinquanta');
+  });
+
+  it('sends file as FormData instance', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ text: 'test' }),
+    } as Response);
+
+    const blob = new Blob(['audio'], { type: 'audio/webm' });
+    await transcribe(blob);
+
+    const [, options] = vi.mocked(fetch).mock.calls[0];
+    expect((options as RequestInit).body).toBeInstanceOf(FormData);
+  });
+
+  it('throws on non-ok response', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    } as Response);
+
+    const blob = new Blob(['audio'], { type: 'audio/webm' });
+    await expect(transcribe(blob)).rejects.toThrow('transcribe failed: 500');
   });
 });

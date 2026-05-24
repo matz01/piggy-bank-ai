@@ -10,3 +10,15 @@ export async function parse(req: ParseRequest): Promise<ParseResponse> {
   });
   return res.json();
 }
+
+export async function transcribe(audio: Blob): Promise<string> {
+  const form = new FormData();
+  form.append('file', audio, 'audio');
+  const res = await fetch(`${API_URL}/transcribe`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!res.ok) throw new Error(`transcribe failed: ${res.status}`);
+  const data = await res.json();
+  return data.text;
+}
