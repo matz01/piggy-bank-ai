@@ -18,7 +18,11 @@ export async function createRecorder(): Promise<Recorder> {
       recorder.start();
     },
     stop() {
-      return new Promise((resolve) => {
+      return new Promise<Blob>((resolve, reject) => {
+        recorder.onerror = (e: MediaRecorderErrorEvent) => {
+          stream.getTracks().forEach((t) => t.stop());
+          reject((e as any).error ?? new Error('MediaRecorder error'));
+        };
         recorder.onstop = () => {
           stream.getTracks().forEach((t) => t.stop());
           resolve(new Blob(chunks, { type: recorder.mimeType }));

@@ -71,4 +71,18 @@ describe('createRecorder', () => {
     });
     await expect(createRecorder()).rejects.toThrow('Permission denied');
   });
+
+  it('stop() rejects when MediaRecorder fires onerror', async () => {
+    let capturedOnError: ((e: { error: Error }) => void) | undefined;
+    Object.defineProperty(mockRecorderInstance, 'onerror', {
+      set(fn: (e: { error: Error }) => void) { capturedOnError = fn; },
+      configurable: true,
+    });
+
+    const recorder = await createRecorder();
+    recorder.start();
+    const stopPromise = recorder.stop();
+    capturedOnError!({ error: new Error('abort') });
+    await expect(stopPromise).rejects.toThrow('abort');
+  });
 });
