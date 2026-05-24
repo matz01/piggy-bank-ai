@@ -19,10 +19,10 @@ export function MicButton({ sessionState, onPress, onRelease }: Props) {
         onPress();
       }}
       onPointerUp={() => {
-        onRelease();
+        if (isRecording) onRelease();
       }}
       onPointerLeave={() => {
-        onRelease();
+        if (isRecording) onRelease();
       }}
       style={{ opacity: isProcessing ? 0.5 : 1 }}
       className={`w-24 h-24 rounded-full border-2 flex items-center justify-center transition-all select-none touch-none ${

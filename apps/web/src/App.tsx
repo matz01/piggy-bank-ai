@@ -101,7 +101,9 @@ export default function App() {
   }, [session, selectedTags, showSalvato]);
 
   const handleCancel = useCallback(() => {
+    const recorder = recorderRef.current;
     recorderRef.current = null;
+    recorder?.stop().catch(() => {});
     session.reset();
     setSelectedTags([]);
     setMode('expense');

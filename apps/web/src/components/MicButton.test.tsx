@@ -16,14 +16,24 @@ describe('MicButton', () => {
     expect(onPress).toHaveBeenCalled();
   });
 
-  it('calls onRelease on pointer up', async () => {
+  it('calls onRelease on pointer up when recording', async () => {
+    const onRelease = vi.fn();
+    render(<MicButton sessionState="recording" onPress={vi.fn()} onRelease={onRelease} />);
+    await userEvent.pointer([
+      { target: screen.getByRole('button'), keys: '[MouseLeft>]' },
+      { keys: '[/MouseLeft]' },
+    ]);
+    expect(onRelease).toHaveBeenCalled();
+  });
+
+  it('does not call onRelease on pointer up when idle', async () => {
     const onRelease = vi.fn();
     render(<MicButton sessionState="idle" onPress={vi.fn()} onRelease={onRelease} />);
     await userEvent.pointer([
       { target: screen.getByRole('button'), keys: '[MouseLeft>]' },
       { keys: '[/MouseLeft]' },
     ]);
-    expect(onRelease).toHaveBeenCalled();
+    expect(onRelease).not.toHaveBeenCalled();
   });
 
   it('shows processing state visually', () => {
