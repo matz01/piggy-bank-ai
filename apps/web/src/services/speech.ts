@@ -19,7 +19,7 @@ export function startTranscription(options: SpeechOptions): () => void {
   const recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
-  recognition.lang = options.lang ?? 'it-IT';
+  recognition.lang = options.lang ?? 'en-US';
 
   recognition.onresult = (e: any) => {
     const transcript: string = e.results[0][0].transcript;
