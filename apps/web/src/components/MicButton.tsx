@@ -14,8 +14,16 @@ export function MicButton({ sessionState, onPress, onRelease }: Props) {
       aria-label="Microfono"
       aria-busy={isProcessing}
       disabled={isProcessing}
-      onPointerDown={onPress}
-      onPointerUp={onRelease}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        onPress();
+      }}
+      onPointerUp={() => {
+        onRelease();
+      }}
+      onPointerLeave={() => {
+        onRelease();
+      }}
       style={{ opacity: isProcessing ? 0.5 : 1 }}
       className={`w-24 h-24 rounded-full border-2 flex items-center justify-center transition-all select-none touch-none ${
         isRecording

@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App.js';
 import { useSession } from './store/sessionStore.js';
-import type { SpeechOptions } from './services/speech.js';
 
 vi.mock('./services/speech.js', () => ({
-  startTranscription: vi.fn(),
+  createRecorder: vi.fn(),
 }));
 vi.mock('./services/api.js', () => ({
   parse: vi.fn(),
+  transcribe: vi.fn(),
 }));
 vi.mock('./services/db.js', () => ({
   saveTransaction: vi.fn(),
@@ -17,58 +17,61 @@ vi.mock('./services/db.js', () => ({
   readAllTagIds: vi.fn().mockResolvedValue([]),
 }));
 
-import { startTranscription } from './services/speech.js';
+import { createRecorder } from './services/speech.js';
+import { parse, transcribe } from './services/api.js';
 
-describe('App handleMicPress onEnd callback', () => {
+describe('App mic flow', () => {
+  const mockBlob = new Blob(['audio']);
+  const mockStart = vi.fn();
+  const mockStop = vi.fn().mockResolvedValue(mockBlob);
+
   beforeEach(() => {
     useSession.setState({ state: 'idle', partial: null, clarification: null, queryResult: null });
-    vi.mocked(startTranscription).mockImplementation(() => () => {});
+    vi.mocked(createRecorder).mockResolvedValue({ start: mockStart, stop: mockStop });
+    vi.mocked(transcribe).mockResolvedValue('caffè uno cinquanta');
+    vi.mocked(parse).mockResolvedValue({ titolo: 'Caffè', importo: 1.5, tag: ['bar'] });
   });
 
-  it('resets state to idle when onEnd fires without onResult (quick tap)', async () => {
-    let capturedOnEnd: (() => void) | undefined;
-    vi.mocked(startTranscription).mockImplementation((opts: SpeechOptions) => {
-      capturedOnEnd = opts.onEnd;
-      return () => {};
-    });
-
+  it('enters recording state after mic press', async () => {
     render(<App />);
-
-    await userEvent.pointer({
-      target: screen.getByRole('button', { name: 'Microfono' }),
-      keys: '[MouseLeft>]',
-    });
-
-    expect(useSession.getState().state).toBe('recording');
-    expect(capturedOnEnd).toBeDefined();
-
-    act(() => { capturedOnEnd!(); });
-
-    expect(useSession.getState().state).toBe('idle');
+    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    await waitFor(() => expect(useSession.getState().state).toBe('recording'));
+    expect(createRecorder).toHaveBeenCalled();
+    expect(mockStart).toHaveBeenCalled();
   });
 
-  it('does not reset state when onEnd fires after onResult (normal flow)', async () => {
-    let capturedOnEnd: (() => void) | undefined;
-    vi.mocked(startTranscription).mockImplementation((opts: SpeechOptions) => {
-      capturedOnEnd = opts.onEnd;
-      return () => {};
-    });
-
+  it('transitions to preview on release after successful transcription', async () => {
     render(<App />);
+    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    await waitFor(() => expect(useSession.getState().state).toBe('recording'));
+    await userEvent.pointer({ keys: '[/MouseLeft]' });
+    await waitFor(() => expect(useSession.getState().state).toBe('preview'));
+    expect(transcribe).toHaveBeenCalledWith(mockBlob);
+    expect(parse).toHaveBeenCalledWith(expect.objectContaining({ text: 'caffè uno cinquanta' }));
+  });
 
-    await userEvent.pointer({
-      target: screen.getByRole('button', { name: 'Microfono' }),
-      keys: '[MouseLeft>]',
-    });
+  it('stays idle when createRecorder fails (microphone permission denied)', async () => {
+    vi.mocked(createRecorder).mockRejectedValueOnce(new Error('Permission denied'));
+    render(<App />);
+    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    await waitFor(() => expect(useSession.getState().state).toBe('idle'));
+  });
 
-    // Simulate onResult having already moved state to 'processing'
-    act(() => { useSession.getState().setState('processing'); });
+  it('returns to idle when transcribe fails', async () => {
+    vi.mocked(transcribe).mockRejectedValueOnce(new Error('Network error'));
+    render(<App />);
+    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    await waitFor(() => expect(useSession.getState().state).toBe('recording'));
+    await userEvent.pointer({ keys: '[/MouseLeft]' });
+    await waitFor(() => expect(useSession.getState().state).toBe('idle'));
+  });
 
-    expect(useSession.getState().state).toBe('processing');
-
-    act(() => { capturedOnEnd!(); });
-
-    // onEnd must not reset to idle — API call is still in progress
-    expect(useSession.getState().state).toBe('processing');
+  it('returns to idle when parse fails', async () => {
+    vi.mocked(parse).mockRejectedValueOnce(new Error('Parse error'));
+    render(<App />);
+    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    await waitFor(() => expect(useSession.getState().state).toBe('recording'));
+    await userEvent.pointer({ keys: '[/MouseLeft]' });
+    await waitFor(() => expect(useSession.getState().state).toBe('idle'));
   });
 });

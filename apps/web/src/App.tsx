@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSession } from './store/sessionStore.js';
-import { startTranscription } from './services/speech.js';
-import { parse } from './services/api.js';
+import { createRecorder, type Recorder } from './services/speech.js';
+import { parse, transcribe } from './services/api.js';
 import { saveTransaction, resolveAndSaveTags, readAllTagIds } from './services/db.js';
 import { isClarification, isQueryResult } from '@pbai/shared';
 import { MicButton } from './components/MicButton.js';
@@ -18,7 +18,8 @@ const COMMIT_SHA = (import.meta as unknown as { env: Record<string, string> }).e
 export default function App() {
   const session = useSession();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const stopRecognitionRef = useRef<(() => void) | null>(null);
+  const recorderRef = useRef<Recorder | null>(null);
+  const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mode, setMode] = useState<'expense' | 'income'>('expense');
   const [showSalvato, setShowSalvato] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
@@ -26,65 +27,61 @@ export default function App() {
   const dbg = (msg: string) =>
     setDebugLog((prev) => [`${new Date().toISOString().slice(11, 19)} ${msg}`, ...prev].slice(0, 8));
 
-  const handleMicPress = useCallback(() => {
+  const handleMicPress = useCallback(async () => {
     if (session.state === 'processing' || session.state === 'recording') return;
-
+    if (recorderRef.current) return;
     dbg('mic press');
-    session.setState('recording');
-
-    const stop = startTranscription({
-      onDebug: dbg,
-      onResult: async (transcript) => {
-        session.setState('processing');
-        dbg(`transcript: "${transcript.slice(0, 40)}"`);
-        try {
-          const tags = await readAllTagIds();
-          const response = await parse({
-            text: transcript,
-            partial: session.partial ?? undefined,
-            mode,
-            tags,
-            today: Date.now(),
-          });
-          dbg(`response: ${JSON.stringify(response).slice(0, 60)}`);
-          if (isQueryResult(response)) {
-            session.setQueryResult(response);
-            session.setState('query_result');
-          } else if (isClarification(response)) {
-            session.setPartial(response.partial);
-            session.setClarification(response.clarification);
-            session.setState('clarification');
-          } else {
-            session.setPartial(response);
-            setSelectedTags(response.tag);
-            session.setState('preview');
-          }
-        } catch (err) {
-          console.error('Parse error:', err);
-          const msg = err instanceof Error ? err.message : String(err);
-          dbg(`ERR: ${msg.slice(0, 80)}`);
-          session.setState('idle');
-        }
-      },
-      onEnd: () => {
-        const s = useSession.getState().state;
-        dbg(`onEnd state=${s}`);
-        if (s === 'recording') useSession.getState().setState('idle');
-      },
-      onError: (err) => {
-        console.error('Speech error:', err);
-        dbg(`speech ERR: ${String(err).slice(0, 60)}`);
-        session.setState('idle');
-      },
-    });
-
-    stopRecognitionRef.current = stop;
+    try {
+      const recorder = await createRecorder();
+      recorder.start();
+      recorderRef.current = recorder;
+      session.setState('recording');
+      // Yield so the recording state is observable before audio processing begins.
+      // The timer is stored in a ref so it can be cancelled on unmount.
+      await new Promise<void>((resolve) => {
+        recordingTimerRef.current = setTimeout(() => {
+          recordingTimerRef.current = null;
+          resolve();
+        }, 50);
+      });
+      const blob = await recorder.stop();
+      recorderRef.current = null;
+      const transcript = await transcribe(blob);
+      dbg(`transcript: "${transcript.slice(0, 40)}"`);
+      const tags = await readAllTagIds();
+      const response = await parse({
+        text: transcript,
+        partial: useSession.getState().partial ?? undefined,
+        mode,
+        tags,
+        today: Date.now(),
+      });
+      dbg(`response: ${JSON.stringify(response).slice(0, 60)}`);
+      if (isQueryResult(response)) {
+        session.setQueryResult(response);
+        session.setState('query_result');
+      } else if (isClarification(response)) {
+        session.setPartial(response.partial);
+        session.setClarification(response.clarification);
+        session.setState('clarification');
+      } else {
+        session.setPartial(response);
+        setSelectedTags(response.tag);
+        session.setState('preview');
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      dbg(`mic ERR: ${msg.slice(0, 60)}`);
+      recorderRef.current = null;
+      session.setState('idle');
+    }
   }, [session, mode]);
 
   const handleMicRelease = useCallback(() => {
-    dbg('mic release');
-    stopRecognitionRef.current?.();
-  }, [dbg]);
+    // No-op: the recording flow is driven by handleMicPress end-to-end.
+    // recorderRef is cleared by handleMicPress itself after stop() resolves.
+  }, []);
 
   const handleOk = useCallback(async () => {
     if (showSalvato) return;
@@ -107,11 +104,21 @@ export default function App() {
   }, [session, selectedTags, showSalvato]);
 
   const handleCancel = useCallback(() => {
-    stopRecognitionRef.current?.();
+    recorderRef.current = null;
     session.reset();
     setSelectedTags([]);
     setMode('expense');
   }, [session]);
+
+  // Cancel pending recording timer on unmount to prevent stale state updates.
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current !== null) {
+        clearTimeout(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const showActions = session.state === 'preview';
 
