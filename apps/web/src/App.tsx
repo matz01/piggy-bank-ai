@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useSession } from './store/sessionStore.js';
 import { startTranscription } from './services/speech.js';
 import { parse } from './services/api.js';
@@ -14,12 +14,12 @@ import { QueryDetailView } from './components/QueryDetailView.js';
 export default function App() {
   const session = useSession();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [stopRecognition, setStopRecognition] = useState<(() => void) | null>(null);
+  const stopRecognitionRef = useRef<(() => void) | null>(null);
   const [mode, setMode] = useState<'expense' | 'income'>('expense');
   const [showSalvato, setShowSalvato] = useState(false);
 
   const handleMicPress = useCallback(() => {
-    if (session.state === 'processing') return;
+    if (session.state === 'processing' || session.state === 'recording') return;
 
     session.setState('recording');
 
@@ -52,7 +52,7 @@ export default function App() {
         }
       },
       onEnd: () => {
-        if (session.state === 'recording') session.setState('processing');
+        if (session.state === 'recording') session.setState('idle');
       },
       onError: (err) => {
         console.error('Speech error:', err);
@@ -60,15 +60,14 @@ export default function App() {
       },
     });
 
-    setStopRecognition(() => stop);
+    stopRecognitionRef.current = stop;
   }, [session, mode]);
 
   const handleMicRelease = useCallback(() => {
-    stopRecognition?.();
-  }, [stopRecognition]);
+    stopRecognitionRef.current?.();
+  }, []);
 
   const handleOk = useCallback(async () => {
-    if (showExplosion) return;
     if (!session.partial?.titolo || session.partial?.importo == null) return;
 
     const tag_ids = await resolveAndSaveTags(selectedTags);
@@ -88,11 +87,11 @@ export default function App() {
   }, [session, selectedTags]);
 
   const handleCancel = useCallback(() => {
-    stopRecognition?.();
+    stopRecognitionRef.current?.();
     session.reset();
     setSelectedTags([]);
     setMode('expense');
-  }, [session, stopRecognition]);
+  }, [session]);
 
   const showActions = session.state === 'preview' || session.state === 'clarification';
 
