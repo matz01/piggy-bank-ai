@@ -5,12 +5,12 @@ interface Props {
 
 export function ModeSwitch({ mode, onChange }: Props) {
   return (
-    <div className="flex gap-0.5 bg-pbai-track rounded-full p-0.5">
+    <div className="flex gap-1.5 bg-pbai-track rounded-full p-1.5">
       <button
         aria-label="Spesa"
         aria-pressed={mode === 'expense'}
         onClick={() => onChange('expense')}
-        className="w-4 h-4 rounded-full font-ui font-medium text-xs flex items-center justify-center transition-all"
+        className="w-12 h-12 rounded-full font-ui font-medium text-lg flex items-center justify-center transition-all"
         style={
           mode === 'expense'
             ? { background: 'rgba(192,57,43,.12)', border: '1.5px solid #c0392b', color: '#c0392b' }
@@ -23,7 +23,7 @@ export function ModeSwitch({ mode, onChange }: Props) {
         aria-label="Entrata"
         aria-pressed={mode === 'income'}
         onClick={() => onChange('income')}
-        className="w-4 h-4 rounded-full font-ui font-medium text-xs flex items-center justify-center transition-all"
+        className="w-12 h-12 rounded-full font-ui font-medium text-lg flex items-center justify-center transition-all"
         style={
           mode === 'income'
             ? { background: 'rgba(39,174,96,.12)', border: '1.5px solid #27ae60', color: '#27ae60' }

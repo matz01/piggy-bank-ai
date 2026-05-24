@@ -97,8 +97,7 @@ export default function App() {
     <div
       className="min-h-screen flex flex-col items-center max-w-sm mx-auto font-ui"
       style={{
-        background: '#fdf8f2',
-        backgroundImage: 'radial-gradient(ellipse at 50% 85%, rgba(176,125,72,.04) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse at center, #f8f6f3 0%, #e4ddd5 100%)',
       }}
     >
       {/* Status dot */}
@@ -181,7 +180,7 @@ export default function App() {
               onClick={handleCancel}
               aria-label="Annulla"
               className="w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-95"
-              style={{ border: '1.5px solid #e8d8c4' }}
+              style={{ border: '1.5px solid #d6d0c8' }}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -203,7 +202,7 @@ export default function App() {
               aria-label="Salva"
               className="w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-30"
               style={{
-                border: session.state === 'preview' ? '1.5px solid #b07d48' : '1.5px solid #e8d8c4',
+                border: session.state === 'preview' ? '1.5px solid #c9a84c' : '1.5px solid #d6d0c8',
               }}
             >
               <svg

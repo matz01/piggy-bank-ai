@@ -48,7 +48,7 @@ export function MicButton({ sessionState, onPress, onRelease }: Props) {
           cx="56"
           cy="56"
           r="52"
-          stroke="#b07d48"
+          stroke="#c9a84c"
           strokeWidth="2"
           strokeDasharray="80 246"
           strokeLinecap="round"

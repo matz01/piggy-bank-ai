@@ -46,7 +46,7 @@ export function QueryDetailView({ queryResult, onBack }: Props) {
             </div>
             <span className="font-display text-lg text-pbai-text">
               {t.importo.toFixed(2)}{' '}
-              <span style={{ fontSize: '0.7em', color: '#b07d48' }}>€</span>
+              <span style={{ fontSize: '0.7em', color: '#c9a84c' }}>€</span>
             </span>
           </li>
         ))}

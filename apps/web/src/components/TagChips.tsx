@@ -23,8 +23,8 @@ export function TagChips({ tags, selected, onChange }: Props) {
           }`}
           style={
             selected.includes(tag)
-              ? { background: 'rgba(176,125,72,.10)', border: '1px solid rgba(176,125,72,.35)', color: '#b07d48' }
-              : { border: '1px solid #e8d8c4', color: '#c9b8a8' }
+              ? { background: 'rgba(201,168,76,.10)', border: '1px solid rgba(201,168,76,.35)', color: '#c9a84c' }
+              : { border: '1px solid #d6d0c8', color: '#b2aba3' }
           }
         >
           {tag}

@@ -26,7 +26,7 @@ export function QueryResultView({ queryResult, onDetail }: Props) {
         {total < 0 && <span style={{ fontSize: '0.58em', color: '#c0392b' }}>−</span>}
         <span>{intPart}</span>
         <span style={{ fontSize: '0.48em', verticalAlign: 'super' }}>.{decPart}</span>
-        <span style={{ fontSize: '0.21em', verticalAlign: 'super', color: '#b07d48' }}>€</span>
+        <span style={{ fontSize: '0.21em', verticalAlign: 'super', color: '#c9a84c' }}>€</span>
       </p>
       <button
         onClick={onDetail}
