@@ -45,5 +45,13 @@ export function startTranscription(options: SpeechOptions): () => void {
 
   recognition.start();
 
-  return () => recognition.stop();
+  // on iOS, calling stop() before speechstart fires triggers onerror:aborted
+  // let iOS end the recognition naturally; only stop if speech was already detected
+  return () => {
+    if (speechDetected) {
+      recognition.stop();
+    } else {
+      dbg('stop skipped (no speech yet)');
+    }
+  };
 }
