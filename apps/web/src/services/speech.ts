@@ -1,49 +1,30 @@
-export interface SpeechOptions {
-  lang?: string;
-  onResult: (transcript: string) => void;
-  onEnd: () => void;
-  onError: (error: string) => void;
-  onDebug?: (msg: string) => void;
+export interface Recorder {
+  start: () => void;
+  stop: () => Promise<Blob>;
 }
 
-export function startTranscription(options: SpeechOptions): () => void {
-  const SpeechRecognition =
-    (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
+export async function createRecorder(): Promise<Recorder> {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const recorder = new MediaRecorder(stream);
+  const chunks: BlobPart[] = [];
 
-  if (!SpeechRecognition) {
-    options.onError('Speech recognition not supported in this browser.');
-    return () => {};
-  }
-
-  const dbg = options.onDebug ?? (() => {});
-  const recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.lang = options.lang ?? 'it-IT';
-
-  recognition.onresult = (e: any) => {
-    const transcript: string = e.results[0][0].transcript;
-    options.onResult(transcript);
+  recorder.ondataavailable = (e) => {
+    if (e.data.size > 0) chunks.push(e.data);
   };
 
-  let speechDetected = false;
-  recognition.onaudiostart = () => dbg('audiostart');
-  recognition.onspeechstart = () => { speechDetected = true; dbg('speechstart'); };
-  recognition.onspeechend = () => dbg('speechend');
-  recognition.onaudioend = () => dbg('audioend');
-
-  recognition.onend = () => {
-    if (!speechDetected) dbg('no speech detected');
-    options.onEnd();
+  return {
+    start() {
+      chunks.length = 0;
+      recorder.start();
+    },
+    stop() {
+      return new Promise((resolve) => {
+        recorder.onstop = () => {
+          stream.getTracks().forEach((t) => t.stop());
+          resolve(new Blob(chunks, { type: recorder.mimeType }));
+        };
+        recorder.stop();
+      });
+    },
   };
-
-  recognition.onerror = (e: any) => {
-    const code = e.error ?? 'unknown';
-    dbg(`onerror: ${code}`);
-    options.onError(code);
-  };
-
-  recognition.start();
-
-  return () => recognition.stop();
 }
