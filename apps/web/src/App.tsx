@@ -39,6 +39,7 @@ export default function App() {
             session.setQueryResult(response);
             session.setState('query_result');
           } else if (isClarification(response)) {
+            session.setPartial(response.partial);
             session.setClarification(response.clarification);
             session.setState('clarification');
           } else {
@@ -52,7 +53,7 @@ export default function App() {
         }
       },
       onEnd: () => {
-        if (session.state === 'recording') session.setState('idle');
+        if (useSession.getState().state === 'recording') useSession.getState().setState('idle');
       },
       onError: (err) => {
         console.error('Speech error:', err);
@@ -68,6 +69,7 @@ export default function App() {
   }, []);
 
   const handleOk = useCallback(async () => {
+    if (showSalvato) return;
     if (!session.partial?.titolo || session.partial?.importo == null) return;
 
     const tag_ids = await resolveAndSaveTags(selectedTags);
@@ -84,7 +86,7 @@ export default function App() {
     setMode('expense');
     setShowSalvato(true);
     setTimeout(() => setShowSalvato(false), 2000);
-  }, [session, selectedTags]);
+  }, [session, selectedTags, showSalvato]);
 
   const handleCancel = useCallback(() => {
     stopRecognitionRef.current?.();
@@ -93,7 +95,7 @@ export default function App() {
     setMode('expense');
   }, [session]);
 
-  const showActions = session.state === 'preview' || session.state === 'clarification';
+  const showActions = session.state === 'preview';
 
   return (
     <div
@@ -123,7 +125,7 @@ export default function App() {
       <div className="flex-1 flex flex-col items-center justify-center gap-6 w-full px-6">
         {session.state === 'idle' && (
           showSalvato ? (
-            <p className="font-display italic text-[40px] leading-none text-pbai-accent animate-fade-up">
+            <p className="font-display italic text-[40px] leading-none text-pbai-dim animate-fade-up">
               SALVATO
             </p>
           ) : (

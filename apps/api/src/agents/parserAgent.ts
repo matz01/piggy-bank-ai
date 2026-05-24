@@ -37,7 +37,10 @@ export async function parseExpense(
   const object = ParseSchema.parse(extractJson(raw));
 
   if (object.importo === null) {
-    return { clarification: object.clarification ?? "Puoi specificare l'importo?" };
+    return {
+      clarification: object.clarification ?? "Puoi specificare l'importo?",
+      partial: { titolo: object.titolo, tag: object.tag },
+    };
   }
 
   return { titolo: object.titolo, importo: object.importo, tag: object.tag };

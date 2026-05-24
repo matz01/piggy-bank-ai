@@ -34,12 +34,12 @@ describe('parse', () => {
 
   it('returns ClarificationResult as-is', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
-      json: async () => ({ clarification: 'Quanto hai speso?' }),
+      json: async () => ({ clarification: 'Quanto hai speso?', partial: { titolo: 'Caffè', tag: [] } }),
     } as Response);
 
     const result = await parse({ text: 'caffè' });
 
-    expect(result).toEqual({ clarification: 'Quanto hai speso?' });
+    expect(result).toEqual({ clarification: 'Quanto hai speso?', partial: { titolo: 'Caffè', tag: [] } });
   });
 
   it('includes mode in body when provided', async () => {

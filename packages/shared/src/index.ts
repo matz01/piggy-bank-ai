@@ -20,6 +20,7 @@ export interface ParseResult {
 
 export interface ClarificationResult {
   clarification: string;
+  partial: Partial<Pick<ParseResult, 'titolo' | 'tag'>>;
 }
 
 export interface QueryResult {

@@ -26,7 +26,7 @@ describe('parseExpense', () => {
 
     const result = await parseExpense('caffè al bar');
 
-    expect(result).toEqual({ clarification: 'Quanto hai speso?' });
+    expect(result).toEqual({ clarification: 'Quanto hai speso?', partial: { titolo: 'Caffè', tag: ['bar'] } });
   });
 
   it('includes partial in prompt when provided', async () => {
