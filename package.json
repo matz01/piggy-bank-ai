@@ -6,9 +6,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:web": "npm -w @pbai/web run dev",
+    "dev:web": "npm -w @pbai/web run dev -- --host",
     "dev:api": "npm -w @pbai/api run dev",
-    "dev:app": "npm run dev:web & npm run dev:api",
+    "dev:app": "npm run dev:web& npm run dev:api",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present"
   },
