@@ -19,7 +19,7 @@ export function startTranscription(options: SpeechOptions): () => void {
   const recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
-  recognition.lang = options.lang ?? 'en-US';
+  recognition.lang = options.lang ?? 'it-IT';
 
   recognition.onresult = (e: any) => {
     const transcript: string = e.results[0][0].transcript;
@@ -45,13 +45,5 @@ export function startTranscription(options: SpeechOptions): () => void {
 
   recognition.start();
 
-  // on iOS, calling stop() before speechstart fires triggers onerror:aborted
-  // let iOS end the recognition naturally; only stop if speech was already detected
-  return () => {
-    if (speechDetected) {
-      recognition.stop();
-    } else {
-      dbg('stop skipped (no speech yet)');
-    }
-  };
+  return () => recognition.stop();
 }
