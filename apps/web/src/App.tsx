@@ -11,14 +11,12 @@ import { TransactionPreview } from './components/TransactionPreview.js';
 import { ClarificationPrompt } from './components/ClarificationPrompt.js';
 import { QueryResultView } from './components/QueryResultView.js';
 import { QueryDetailView } from './components/QueryDetailView.js';
-import { SalvatoExplosion } from './components/SalvatoExplosion.js';
-
 export default function App() {
   const session = useSession();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [stopRecognition, setStopRecognition] = useState<(() => void) | null>(null);
   const [mode, setMode] = useState<'expense' | 'income'>('expense');
-  const [showExplosion, setShowExplosion] = useState(false);
+  const [showSalvato, setShowSalvato] = useState(false);
 
   const handleMicPress = useCallback(() => {
     if (session.state === 'processing') return;
@@ -82,15 +80,12 @@ export default function App() {
       tag_ids,
     });
 
-    setShowExplosion(true);
-  }, [session, selectedTags, showExplosion]);
-
-  const handleExplosionDone = useCallback(() => {
-    setShowExplosion(false);
     session.reset();
     setSelectedTags([]);
     setMode('expense');
-  }, [session]);
+    setShowSalvato(true);
+    setTimeout(() => setShowSalvato(false), 2000);
+  }, [session, selectedTags]);
 
   const handleCancel = useCallback(() => {
     stopRecognition?.();
@@ -128,9 +123,15 @@ export default function App() {
       {/* Content area */}
       <div className="flex-1 flex flex-col items-center justify-center gap-6 w-full px-6">
         {session.state === 'idle' && (
-          <p className="font-ui text-[11px] uppercase tracking-widest text-pbai-dim text-center leading-relaxed">
-            Tieni premuto il microfono<br />per registrare una spesa
-          </p>
+          showSalvato ? (
+            <p className="font-display italic text-[40px] leading-none text-pbai-accent animate-fade-up">
+              SALVATO
+            </p>
+          ) : (
+            <p className="font-ui text-[11px] uppercase tracking-widest text-pbai-dim text-center leading-relaxed">
+              Tieni premuto il microfono<br />per registrare una spesa
+            </p>
+          )
         )}
 
         {session.state === 'recording' && (
@@ -179,8 +180,6 @@ export default function App() {
           />
         )}
       </div>
-
-      {showExplosion && <SalvatoExplosion onDone={handleExplosionDone} />}
 
       {/* Controls */}
       <div className="flex items-center justify-center w-full pb-12">
