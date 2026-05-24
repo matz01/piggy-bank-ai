@@ -38,7 +38,7 @@ describe('POST /parse', () => {
   });
 
   it('returns ClarificationResult when importo is missing', async () => {
-    vi.mocked(parseExpense).mockResolvedValueOnce({ clarification: 'Quanto hai speso?' });
+    vi.mocked(parseExpense).mockResolvedValueOnce({ clarification: 'Quanto hai speso?', partial: {} });
 
     const res = await app.request('/parse', {
       method: 'POST',
@@ -47,7 +47,7 @@ describe('POST /parse', () => {
     });
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ clarification: 'Quanto hai speso?' });
+    expect(await res.json()).toEqual({ clarification: 'Quanto hai speso?', partial: {} });
   });
 
   it('forwards partial to parseExpense', async () => {

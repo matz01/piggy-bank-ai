@@ -3,7 +3,7 @@ import { isClarification, isQueryResult } from '@pbai/shared';
 import type { ParseResult, ClarificationResult, QueryResult } from '@pbai/shared';
 
 const parseResult: ParseResult = { titolo: 'Caffè', importo: 1.5, tag: ['bar'] };
-const clarificationResult: ClarificationResult = { clarification: 'Quanto?' };
+const clarificationResult: ClarificationResult = { clarification: 'Quanto?', partial: {} };
 const queryResult: QueryResult = { tag_ids: ['bar'], date_from: 0, date_to: 1 };
 
 describe('isClarification', () => {
