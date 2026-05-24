@@ -82,8 +82,9 @@ export default function App() {
   }, [session, mode]);
 
   const handleMicRelease = useCallback(() => {
+    dbg('mic release');
     stopRecognitionRef.current?.();
-  }, []);
+  }, [dbg]);
 
   const handleOk = useCallback(async () => {
     if (showSalvato) return;
