@@ -26,12 +26,16 @@ export function startTranscription(options: SpeechOptions): () => void {
     options.onResult(transcript);
   };
 
+  let speechDetected = false;
   recognition.onaudiostart = () => dbg('audiostart');
-  recognition.onspeechstart = () => dbg('speechstart');
+  recognition.onspeechstart = () => { speechDetected = true; dbg('speechstart'); };
   recognition.onspeechend = () => dbg('speechend');
   recognition.onaudioend = () => dbg('audioend');
 
-  recognition.onend = options.onEnd;
+  recognition.onend = () => {
+    if (!speechDetected) dbg('no speech detected');
+    options.onEnd();
+  };
 
   recognition.onerror = (e: any) => {
     const code = e.error ?? 'unknown';
