@@ -33,6 +33,7 @@ export default function App() {
     session.setState('recording');
 
     const stop = startTranscription({
+      onDebug: dbg,
       onResult: async (transcript) => {
         session.setState('processing');
         dbg(`transcript: "${transcript.slice(0, 40)}"`);

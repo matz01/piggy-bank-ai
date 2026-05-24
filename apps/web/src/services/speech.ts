@@ -3,6 +3,7 @@ export interface SpeechOptions {
   onResult: (transcript: string) => void;
   onEnd: () => void;
   onError: (error: string) => void;
+  onDebug?: (msg: string) => void;
 }
 
 export function startTranscription(options: SpeechOptions): () => void {
@@ -14,6 +15,7 @@ export function startTranscription(options: SpeechOptions): () => void {
     return () => {};
   }
 
+  const dbg = options.onDebug ?? (() => {});
   const recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
@@ -24,10 +26,17 @@ export function startTranscription(options: SpeechOptions): () => void {
     options.onResult(transcript);
   };
 
+  recognition.onaudiostart = () => dbg('audiostart');
+  recognition.onspeechstart = () => dbg('speechstart');
+  recognition.onspeechend = () => dbg('speechend');
+  recognition.onaudioend = () => dbg('audioend');
+
   recognition.onend = options.onEnd;
 
   recognition.onerror = (e: any) => {
-    options.onError(e.error ?? 'Speech recognition error');
+    const code = e.error ?? 'unknown';
+    dbg(`onerror: ${code}`);
+    options.onError(code);
   };
 
   recognition.start();
