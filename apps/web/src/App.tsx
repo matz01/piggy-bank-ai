@@ -13,6 +13,7 @@ import { QueryResultView } from './components/QueryResultView.js';
 import { QueryDetailView } from './components/QueryDetailView.js';
 
 const API_URL = (import.meta as unknown as { env: Record<string, string> }).env.VITE_API_URL ?? '(not set)';
+const COMMIT_SHA = (import.meta as unknown as { env: Record<string, string> }).env.VITE_COMMIT_SHA ?? 'dev';
 
 export default function App() {
   const session = useSession();
@@ -119,8 +120,9 @@ export default function App() {
         background: 'radial-gradient(ellipse at 50% 45%, #ffffff 0%, #e8e8e8 100%)',
       }}
     >
-      {/* Status dot */}
-      <div className="flex items-center gap-2 pt-4 px-6 self-start h-8">
+      {/* Header row: status dot + commit SHA */}
+      <div className="flex items-center justify-between w-full pt-4 px-6 h-8">
+      <div className="flex items-center gap-2">
         <div
           className={`w-1.5 h-1.5 rounded-full ${
             session.state === 'recording' ? 'bg-pbai-expense animate-pulse' : 'bg-pbai-dim'
@@ -129,6 +131,8 @@ export default function App() {
         <span className="font-ui text-[10px] uppercase tracking-widest text-pbai-dim">
           {session.state}
         </span>
+      </div>
+      <span className="font-mono text-[10px] text-pbai-dim">{COMMIT_SHA}</span>
       </div>
 
       {/* Mode switch */}
