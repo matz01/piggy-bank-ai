@@ -8,12 +8,14 @@ export async function parse(req: ParseRequest): Promise<ParseResponse> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
   });
+  if (!res.ok) throw new Error(`parse failed: ${res.status}`);
   return res.json();
 }
 
 export async function transcribe(audio: Blob): Promise<string> {
   const form = new FormData();
-  form.append('file', audio, 'audio');
+  const ext = (audio.type.split('/')[1] ?? 'webm').split(';')[0];
+  form.append('file', audio, `audio.${ext}`);
   const res = await fetch(`${API_URL}/transcribe`, {
     method: 'POST',
     body: form,

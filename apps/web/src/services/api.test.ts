@@ -8,6 +8,7 @@ beforeEach(() => {
 describe('parse', () => {
   it('calls POST /parse with text', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ titolo: 'Caffè', importo: 1.5, tag: ['bar'] }),
     } as Response);
 
@@ -22,6 +23,7 @@ describe('parse', () => {
 
   it('includes partial in body when provided', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ titolo: 'Caffè', importo: 2.0, tag: ['bar'] }),
     } as Response);
 
@@ -34,6 +36,7 @@ describe('parse', () => {
 
   it('returns ClarificationResult as-is', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ clarification: 'Quanto hai speso?', partial: { titolo: 'Caffè', tag: [] } }),
     } as Response);
 
@@ -44,6 +47,7 @@ describe('parse', () => {
 
   it('includes mode in body when provided', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ titolo: 'Caffè', importo: 1.5, tag: ['bar'] }),
     } as Response);
 
@@ -56,6 +60,7 @@ describe('parse', () => {
 
   it('includes tags and today in body when provided', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ tag_ids: ['bar'], date_from: 0, date_to: 1 }),
     } as Response);
 
@@ -65,6 +70,15 @@ describe('parse', () => {
     const body = JSON.parse((options as RequestInit).body as string);
     expect(body.tags).toEqual(['bar', 'cibo']);
     expect(body.today).toBe(9999);
+  });
+
+  it('throws on non-ok response', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    } as Response);
+
+    await expect(parse({ text: 'caffè' })).rejects.toThrow('parse failed: 500');
   });
 });
 

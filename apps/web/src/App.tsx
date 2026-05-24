@@ -30,11 +30,11 @@ export default function App() {
     if (session.state === 'processing' || session.state === 'recording') return;
     if (recorderRef.current) return;
     dbg('mic press');
+    session.setState('recording');
     try {
       const recorder = await createRecorder();
       recorder.start();
       recorderRef.current = recorder;
-      session.setState('recording');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       dbg(`mic ERR: ${msg.slice(0, 60)}`);
