@@ -40,4 +40,11 @@ describe('SalvatoExplosion', () => {
     render(<SalvatoExplosion onDone={onDone} />);
     expect(onDone).toHaveBeenCalledOnce();
   });
+
+  it('cancels animation on unmount', () => {
+    const cancelSpy = vi.spyOn(window, 'cancelAnimationFrame');
+    const { unmount } = render(<SalvatoExplosion onDone={vi.fn()} />);
+    unmount();
+    expect(cancelSpy).toHaveBeenCalled();
+  });
 });

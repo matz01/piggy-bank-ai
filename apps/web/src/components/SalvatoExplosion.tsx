@@ -60,6 +60,8 @@ export function SalvatoExplosion({ onDone }: Props) {
 
     const maxRadius = Math.min(canvas.width, canvas.height) * 0.42;
 
+    let rafId: number;
+
     function animate() {
       ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
       let anyAlive = false;
@@ -82,13 +84,14 @@ export function SalvatoExplosion({ onDone }: Props) {
       }
 
       if (anyAlive) {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
       } else {
         onDone();
       }
     }
 
-    requestAnimationFrame(animate);
+    rafId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafId);
   }, [onDone]);
 
   return (
