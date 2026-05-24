@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useSession } from './store/sessionStore.js';
 import { createRecorder, type Recorder } from './services/speech.js';
 import { parse, transcribe } from './services/api.js';
@@ -19,7 +19,6 @@ export default function App() {
   const session = useSession();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const recorderRef = useRef<Recorder | null>(null);
-  const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mode, setMode] = useState<'expense' | 'income'>('expense');
   const [showSalvato, setShowSalvato] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
@@ -36,16 +35,20 @@ export default function App() {
       recorder.start();
       recorderRef.current = recorder;
       session.setState('recording');
-      // Yield so the recording state is observable before audio processing begins.
-      // The timer is stored in a ref so it can be cancelled on unmount.
-      await new Promise<void>((resolve) => {
-        recordingTimerRef.current = setTimeout(() => {
-          recordingTimerRef.current = null;
-          resolve();
-        }, 50);
-      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      dbg(`mic ERR: ${msg.slice(0, 60)}`);
+      session.setState('idle');
+    }
+  }, [session]);
+
+  const handleMicRelease = useCallback(async () => {
+    if (!recorderRef.current) return;
+    const recorder = recorderRef.current;
+    recorderRef.current = null;
+    session.setState('processing');
+    try {
       const blob = await recorder.stop();
-      recorderRef.current = null;
       const transcript = await transcribe(blob);
       dbg(`transcript: "${transcript.slice(0, 40)}"`);
       const tags = await readAllTagIds();
@@ -72,16 +75,10 @@ export default function App() {
     } catch (err) {
       console.error('Error:', err);
       const msg = err instanceof Error ? err.message : String(err);
-      dbg(`mic ERR: ${msg.slice(0, 60)}`);
-      recorderRef.current = null;
+      dbg(`ERR: ${msg.slice(0, 80)}`);
       session.setState('idle');
     }
   }, [session, mode]);
-
-  const handleMicRelease = useCallback(() => {
-    // No-op: the recording flow is driven by handleMicPress end-to-end.
-    // recorderRef is cleared by handleMicPress itself after stop() resolves.
-  }, []);
 
   const handleOk = useCallback(async () => {
     if (showSalvato) return;
@@ -109,16 +106,6 @@ export default function App() {
     setSelectedTags([]);
     setMode('expense');
   }, [session]);
-
-  // Cancel pending recording timer on unmount to prevent stale state updates.
-  useEffect(() => {
-    return () => {
-      if (recordingTimerRef.current !== null) {
-        clearTimeout(recordingTimerRef.current);
-        recordingTimerRef.current = null;
-      }
-    };
-  }, []);
 
   const showActions = session.state === 'preview';
 

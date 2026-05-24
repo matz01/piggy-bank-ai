@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App.js';
 import { useSession } from './store/sessionStore.js';
@@ -34,7 +34,8 @@ describe('App mic flow', () => {
 
   it('enters recording state after mic press', async () => {
     render(<App />);
-    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    const micButton = screen.getByRole('button', { name: 'Microfono' });
+    fireEvent.pointerDown(micButton);
     await waitFor(() => expect(useSession.getState().state).toBe('recording'));
     expect(createRecorder).toHaveBeenCalled();
     expect(mockStart).toHaveBeenCalled();
@@ -42,9 +43,10 @@ describe('App mic flow', () => {
 
   it('transitions to preview on release after successful transcription', async () => {
     render(<App />);
-    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    const micButton = screen.getByRole('button', { name: 'Microfono' });
+    fireEvent.pointerDown(micButton);
     await waitFor(() => expect(useSession.getState().state).toBe('recording'));
-    await userEvent.pointer({ keys: '[/MouseLeft]' });
+    fireEvent.pointerUp(micButton);
     await waitFor(() => expect(useSession.getState().state).toBe('preview'));
     expect(transcribe).toHaveBeenCalledWith(mockBlob);
     expect(parse).toHaveBeenCalledWith(expect.objectContaining({ text: 'caffè uno cinquanta' }));
@@ -53,25 +55,28 @@ describe('App mic flow', () => {
   it('stays idle when createRecorder fails (microphone permission denied)', async () => {
     vi.mocked(createRecorder).mockRejectedValueOnce(new Error('Permission denied'));
     render(<App />);
-    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    const micButton = screen.getByRole('button', { name: 'Microfono' });
+    fireEvent.pointerDown(micButton);
     await waitFor(() => expect(useSession.getState().state).toBe('idle'));
   });
 
   it('returns to idle when transcribe fails', async () => {
     vi.mocked(transcribe).mockRejectedValueOnce(new Error('Network error'));
     render(<App />);
-    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    const micButton = screen.getByRole('button', { name: 'Microfono' });
+    fireEvent.pointerDown(micButton);
     await waitFor(() => expect(useSession.getState().state).toBe('recording'));
-    await userEvent.pointer({ keys: '[/MouseLeft]' });
+    fireEvent.pointerUp(micButton);
     await waitFor(() => expect(useSession.getState().state).toBe('idle'));
   });
 
   it('returns to idle when parse fails', async () => {
     vi.mocked(parse).mockRejectedValueOnce(new Error('Parse error'));
     render(<App />);
-    await userEvent.pointer({ target: screen.getByRole('button', { name: 'Microfono' }), keys: '[MouseLeft>]' });
+    const micButton = screen.getByRole('button', { name: 'Microfono' });
+    fireEvent.pointerDown(micButton);
     await waitFor(() => expect(useSession.getState().state).toBe('recording'));
-    await userEvent.pointer({ keys: '[/MouseLeft]' });
+    fireEvent.pointerUp(micButton);
     await waitFor(() => expect(useSession.getState().state).toBe('idle'));
   });
 });
