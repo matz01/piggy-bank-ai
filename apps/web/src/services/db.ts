@@ -83,3 +83,24 @@ export async function queryTransactions(
       (!title_query || t.titolo.toLowerCase().includes(title_query.toLowerCase()))
   );
 }
+
+export async function deleteTransaction(id: string): Promise<void> {
+  const db = await openDB();
+
+  const readTx = db.transaction('spese', 'readonly');
+  const transaction = await idbRequest<Transaction | undefined>(
+    readTx.objectStore('spese').get(id)
+  );
+
+  const deleteTx = db.transaction('spese', 'readwrite');
+  await idbRequest(deleteTx.objectStore('spese').delete(id));
+
+  if (transaction) {
+    for (const tagId of transaction.tag_ids) {
+      const tag = await getTag(tagId);
+      if (tag && tag.frequenza_uso > 0) {
+        await saveTag({ ...tag, frequenza_uso: tag.frequenza_uso - 1 });
+      }
+    }
+  }
+}

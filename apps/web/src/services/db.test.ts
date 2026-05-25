@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
-import { saveTransaction, getTag, saveTag, resolveAndSaveTags, readAllTagIds, queryTransactions } from './db.js';
+import { saveTransaction, getTag, saveTag, resolveAndSaveTags, readAllTagIds, queryTransactions, deleteTransaction } from './db.js';
 import type { Transaction, Tag } from '@pbai/shared';
 
 beforeEach(() => {
@@ -132,5 +132,37 @@ describe('queryTransactions', () => {
     const ids = result.map((t) => t.id);
     expect(ids).toContain('tq4');
     expect(ids).toContain('tq5');
+  });
+});
+
+describe('deleteTransaction', () => {
+  it('removes the transaction from spese', async () => {
+    const t: Transaction = { id: 'dt1', titolo: 'Negroni', importo: 8.5, data: 500, tag_ids: [] };
+    await saveTransaction(t);
+    await deleteTransaction('dt1');
+    const remaining = await queryTransactions([], 0, 1000);
+    expect(remaining.find((r) => r.id === 'dt1')).toBeUndefined();
+  });
+
+  it('decrements frequenza_uso for each tag in the transaction', async () => {
+    await saveTag({ id: 'bar', nome: 'Bar', frequenza_uso: 3 });
+    const t: Transaction = { id: 'dt2', titolo: 'Negroni', importo: 8.5, data: 500, tag_ids: ['bar'] };
+    await saveTransaction(t);
+    await deleteTransaction('dt2');
+    const tag = await getTag('bar');
+    expect(tag?.frequenza_uso).toBe(2);
+  });
+
+  it('does not decrement frequenza_uso below 0', async () => {
+    await saveTag({ id: 'cibo', nome: 'Cibo', frequenza_uso: 0 });
+    const t: Transaction = { id: 'dt3', titolo: 'Pizza', importo: 10, data: 500, tag_ids: ['cibo'] };
+    await saveTransaction(t);
+    await deleteTransaction('dt3');
+    const tag = await getTag('cibo');
+    expect(tag?.frequenza_uso).toBe(0);
+  });
+
+  it('is a no-op for a non-existent id', async () => {
+    await expect(deleteTransaction('non-existent')).resolves.toBeUndefined();
   });
 });
