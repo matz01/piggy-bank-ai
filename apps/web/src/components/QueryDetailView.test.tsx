@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryDetailView } from './QueryDetailView.js';
@@ -16,6 +16,10 @@ const QR = { tag_ids: ['bar'], date_from: 0, date_to: 1000 };
 beforeEach(() => vi.clearAllMocks());
 
 describe('QueryDetailView', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('lists each transaction titolo', async () => {
     const txns: Transaction[] = [
       { id: '1', titolo: 'Negroni', importo: 8.5, data: 500, tag_ids: ['bar'] },

@@ -16,6 +16,10 @@ export function QueryDetailView({ queryResult, onBack }: Props) {
     queryTransactions(queryResult.tag_ids, queryResult.date_from, queryResult.date_to, queryResult.title_query).then(setTransactions);
   }, [queryResult.tag_ids, queryResult.date_from, queryResult.date_to, queryResult.title_query]);
 
+  useEffect(() => () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  }, []);
+
   const handlePointerDown = (t: Transaction) => {
     longPressTimer.current = setTimeout(() => {
       setDeletingTransaction(t);
@@ -31,9 +35,10 @@ export function QueryDetailView({ queryResult, onBack }: Props) {
 
   const handleConfirmDelete = async () => {
     if (!deletingTransaction) return;
-    await deleteTransaction(deletingTransaction.id);
-    setTransactions((prev) => prev.filter((t) => t.id !== deletingTransaction.id));
+    const { id } = deletingTransaction;
     setDeletingTransaction(null);
+    await deleteTransaction(id);
+    setTransactions((prev) => prev.filter((t) => t.id !== id));
   };
 
   const handleCancelDelete = () => {
@@ -69,6 +74,7 @@ export function QueryDetailView({ queryResult, onBack }: Props) {
             onPointerDown={() => handlePointerDown(t)}
             onPointerUp={handlePointerUp}
             onPointerLeave={handlePointerUp}
+            onPointerCancel={handlePointerUp}
           >
             <div className="flex flex-col gap-0.5">
               <span className="font-ui text-sm text-pbai-text">{t.titolo}</span>
