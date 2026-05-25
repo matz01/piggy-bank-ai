@@ -87,19 +87,18 @@ export async function queryTransactions(
 export async function deleteTransaction(id: string): Promise<void> {
   const db = await openDB();
 
-  const readTx = db.transaction('spese', 'readonly');
-  const transaction = await idbRequest<Transaction | undefined>(
-    readTx.objectStore('spese').get(id)
-  );
+  const tx = db.transaction(['spese', 'tag'], 'readwrite');
+  const speseStore = tx.objectStore('spese');
+  const tagStore = tx.objectStore('tag');
 
-  const deleteTx = db.transaction('spese', 'readwrite');
-  await idbRequest(deleteTx.objectStore('spese').delete(id));
+  const transaction = await idbRequest<Transaction | undefined>(speseStore.get(id));
+  await idbRequest(speseStore.delete(id));
 
   if (transaction) {
     for (const tagId of transaction.tag_ids) {
-      const tag = await getTag(tagId);
+      const tag = await idbRequest<Tag | undefined>(tagStore.get(tagId));
       if (tag && tag.frequenza_uso > 0) {
-        await saveTag({ ...tag, frequenza_uso: tag.frequenza_uso - 1 });
+        await idbRequest(tagStore.put({ ...tag, frequenza_uso: tag.frequenza_uso - 1 }));
       }
     }
   }
