@@ -20,13 +20,18 @@ app.post('/', async (c) => {
     // classifier failure: fall back to expense intent
   }
 
-  if (intent === 'query') {
-    const result = await queryExpenses(body.text, body.tags ?? [], body.today ?? Date.now());
-    return c.json(result);
-  }
+  try {
+    if (intent === 'query') {
+      const result = await queryExpenses(body.text, body.tags ?? [], body.today ?? Date.now());
+      return c.json(result);
+    }
 
-  const result = await parseExpense(body.text, body.partial);
-  return c.json(result);
+    const result = await parseExpense(body.text, body.partial);
+    return c.json(result);
+  } catch (err) {
+    console.error('agent error:', err);
+    return c.json({ error: 'agent failed', detail: String(err) }, 500);
+  }
 });
 
 export default app;
