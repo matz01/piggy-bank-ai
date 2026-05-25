@@ -28,4 +28,8 @@ describe('isQueryResult', () => {
   it('returns false for ClarificationResult', () => {
     expect(isQueryResult(clarificationResult)).toBe(false);
   });
+  it('returns true for QueryResult with title_query', () => {
+    const qr: QueryResult = { tag_ids: [], date_from: 0, date_to: 1, title_query: 'sushi' };
+    expect(isQueryResult(qr)).toBe(true);
+  });
 });

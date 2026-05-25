@@ -27,6 +27,7 @@ export interface QueryResult {
   tag_ids: string[];
   date_from: number;
   date_to: number;
+  title_query?: string | null;
 }
 
 export type ParseResponse = ParseResult | ClarificationResult | QueryResult;
