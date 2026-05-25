@@ -11,8 +11,8 @@ export function QueryResultView({ queryResult, onDetail }: Props) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
-    queryTransactions(queryResult.tag_ids, queryResult.date_from, queryResult.date_to).then(setTransactions);
-  }, [queryResult.tag_ids, queryResult.date_from, queryResult.date_to]);
+    queryTransactions(queryResult.tag_ids, queryResult.date_from, queryResult.date_to, queryResult.title_query).then(setTransactions);
+  }, [queryResult.tag_ids, queryResult.date_from, queryResult.date_to, queryResult.title_query]);
 
   const total = transactions.reduce((sum, t) => sum + t.importo, 0);
   const rounded = Math.round(Math.abs(total) * 100);
