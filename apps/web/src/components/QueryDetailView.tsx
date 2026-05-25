@@ -11,8 +11,8 @@ export function QueryDetailView({ queryResult, onBack }: Props) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
-    queryTransactions(queryResult.tag_ids, queryResult.date_from, queryResult.date_to).then(setTransactions);
-  }, [queryResult.tag_ids, queryResult.date_from, queryResult.date_to]);
+    queryTransactions(queryResult.tag_ids, queryResult.date_from, queryResult.date_to, queryResult.title_query).then(setTransactions);
+  }, [queryResult.tag_ids, queryResult.date_from, queryResult.date_to, queryResult.title_query]);
 
   return (
     <div className="flex flex-col gap-4 w-full animate-fade-up">

@@ -61,4 +61,25 @@ describe('QueryDetailView', () => {
       expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
     });
   });
+
+  it('passes title_query to queryTransactions when set', async () => {
+    vi.mocked(db.queryTransactions).mockResolvedValueOnce([]);
+    const qrWithTQ = { tag_ids: [], date_from: 0, date_to: 1000, title_query: 'sushi' };
+
+    render(<QueryDetailView queryResult={qrWithTQ} onBack={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(db.queryTransactions).toHaveBeenCalledWith([], 0, 1000, 'sushi');
+    });
+  });
+
+  it('passes undefined title_query when not set', async () => {
+    vi.mocked(db.queryTransactions).mockResolvedValueOnce([]);
+
+    render(<QueryDetailView queryResult={QR} onBack={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(db.queryTransactions).toHaveBeenCalledWith(['bar'], 0, 1000, undefined);
+    });
+  });
 });
