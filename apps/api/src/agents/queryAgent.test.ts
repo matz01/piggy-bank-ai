@@ -11,13 +11,13 @@ const TODAY = 1716278400000;
 beforeEach(() => vi.clearAllMocks());
 
 describe('queryExpenses', () => {
-  it('returns QueryResult when tag matches', async () => {
+  it('returns tag_ids and null title_query when tag matches', async () => {
     vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
       text: JSON.stringify({
         tag_ids: ['bar'],
         date_from: TODAY - 7 * 86400000,
         date_to: TODAY,
-        clarification: null,
+        title_query: null,
       }),
     } as any);
 
@@ -27,27 +27,53 @@ describe('queryExpenses', () => {
       tag_ids: ['bar'],
       date_from: TODAY - 7 * 86400000,
       date_to: TODAY,
+      title_query: null,
     });
   });
 
-  it('returns clarification when no tag matches', async () => {
+  it('returns empty tag_ids and title_query when concept has no matching tag', async () => {
     vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
       text: JSON.stringify({
         tag_ids: [],
-        date_from: 0,
-        date_to: 0,
-        clarification: 'Non ho trovato "ristoranti". Prova con: bar, cibo.',
+        date_from: TODAY - 7 * 86400000,
+        date_to: TODAY,
+        title_query: 'sushi',
       }),
     } as any);
 
-    const result = await queryExpenses('quanto ho speso in ristoranti', ['bar', 'cibo'], TODAY);
+    const result = await queryExpenses('quanto ho speso in sushi questa settimana', ['bar', 'cibo'], TODAY);
 
-    expect(result).toEqual({ clarification: 'Non ho trovato "ristoranti". Prova con: bar, cibo.' });
+    expect(result).toEqual({
+      tag_ids: [],
+      date_from: TODAY - 7 * 86400000,
+      date_to: TODAY,
+      title_query: 'sushi',
+    });
+  });
+
+  it('returns empty tag_ids and null title_query when no concept specified', async () => {
+    vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
+      text: JSON.stringify({
+        tag_ids: [],
+        date_from: TODAY - 7 * 86400000,
+        date_to: TODAY,
+        title_query: null,
+      }),
+    } as any);
+
+    const result = await queryExpenses('quanto ho speso questa settimana', [], TODAY);
+
+    expect(result).toEqual({
+      tag_ids: [],
+      date_from: TODAY - 7 * 86400000,
+      date_to: TODAY,
+      title_query: null,
+    });
   });
 
   it('includes today timestamp in system prompt', async () => {
     vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
-      text: JSON.stringify({ tag_ids: [], date_from: 0, date_to: TODAY, clarification: null }),
+      text: JSON.stringify({ tag_ids: [], date_from: 0, date_to: TODAY, title_query: null }),
     } as any);
 
     await queryExpenses('tutto', ['cibo'], TODAY);
@@ -58,7 +84,7 @@ describe('queryExpenses', () => {
 
   it('includes tag list in system prompt', async () => {
     vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
-      text: JSON.stringify({ tag_ids: ['cibo'], date_from: 0, date_to: TODAY, clarification: null }),
+      text: JSON.stringify({ tag_ids: ['cibo'], date_from: 0, date_to: TODAY, title_query: null }),
     } as any);
 
     await queryExpenses('cibo', ['cibo', 'bar', 'trasporti'], TODAY);
@@ -72,7 +98,7 @@ describe('queryExpenses', () => {
 
   it('extracts JSON from code blocks', async () => {
     vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
-      text: '```json\n' + JSON.stringify({ tag_ids: ['bar'], date_from: 0, date_to: TODAY, clarification: null }) + '\n```',
+      text: '```json\n' + JSON.stringify({ tag_ids: ['bar'], date_from: 0, date_to: TODAY, title_query: null }) + '\n```',
     } as any);
 
     const result = await queryExpenses('test', ['bar'], TODAY);
