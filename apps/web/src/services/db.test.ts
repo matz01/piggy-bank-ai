@@ -99,4 +99,38 @@ describe('queryTransactions', () => {
     expect(ids).toContain('qd');
     expect(ids).not.toContain('qc');
   });
+
+  it('filters by titolo substring when title_query is provided', async () => {
+    const t1: Transaction = { id: 'tq1', titolo: 'Sushi Yoshi', importo: 25, data: 500, tag_ids: [] };
+    const t2: Transaction = { id: 'tq2', titolo: 'Pizza Margherita', importo: 12, data: 500, tag_ids: [] };
+    await saveTransaction(t1);
+    await saveTransaction(t2);
+
+    const result = await queryTransactions([], 0, 1000, 'sushi');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('tq1');
+  });
+
+  it('title_query match is case-insensitive', async () => {
+    const t: Transaction = { id: 'tq3', titolo: 'Sushi Yoshi', importo: 25, data: 500, tag_ids: [] };
+    await saveTransaction(t);
+
+    const result = await queryTransactions([], 0, 1000, 'SUSHI');
+
+    expect(result.some((r) => r.id === 'tq3')).toBe(true);
+  });
+
+  it('returns all transactions when title_query is null', async () => {
+    const t1: Transaction = { id: 'tq4', titolo: 'Sushi', importo: 25, data: 500, tag_ids: [] };
+    const t2: Transaction = { id: 'tq5', titolo: 'Pizza', importo: 12, data: 500, tag_ids: [] };
+    await saveTransaction(t1);
+    await saveTransaction(t2);
+
+    const result = await queryTransactions([], 0, 1000, null);
+
+    const ids = result.map((t) => t.id);
+    expect(ids).toContain('tq4');
+    expect(ids).toContain('tq5');
+  });
 });

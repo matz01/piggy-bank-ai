@@ -69,7 +69,8 @@ export async function readAllTagIds(): Promise<string[]> {
 export async function queryTransactions(
   tag_ids: string[],
   date_from: number,
-  date_to: number
+  date_to: number,
+  title_query?: string | null
 ): Promise<Transaction[]> {
   const db = await openDB();
   const tx = db.transaction('spese', 'readonly');
@@ -78,6 +79,7 @@ export async function queryTransactions(
     (t) =>
       t.data >= date_from &&
       t.data <= date_to &&
-      (tag_ids.length === 0 || tag_ids.some((id) => t.tag_ids.includes(id)))
+      (tag_ids.length === 0 || tag_ids.some((id) => t.tag_ids.includes(id))) &&
+      (!title_query || t.titolo.toLowerCase().includes(title_query.toLowerCase()))
   );
 }
