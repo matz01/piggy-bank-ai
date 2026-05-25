@@ -18,11 +18,13 @@ Rispondi SOLO con JSON valido senza markdown:
 - tag_ids: array di stringhe (solo tag dalla lista che corrispondono al concetto richiesto)
 - date_from: number (timestamp ms, inizio del periodo)
 - date_to: number (timestamp ms, fine del periodo)
-- title_query: string oppure null
-Regole per title_query:
-  Se il concetto corrisponde a un tag → tag_ids: [tag], title_query: null
-  Se il concetto NON corrisponde a nessun tag → tag_ids: [], title_query: <concetto>
-  Se non c'è nessun concetto specifico → tag_ids: [], title_query: null
+- title_query: string oppure null (il termine specifico cercato se NON è nella lista tag)
+Prima individua il "concetto" nella query (es. in "quanto ho speso in sushi" il concetto è "sushi").
+Regole:
+  il concetto è un tag esatto nella lista → tag_ids: [tag], title_query: null
+  il concetto NON è nella lista tag → tag_ids: [], title_query: "<concetto>"
+  nessun concetto specifico → tag_ids: [], title_query: null
+Esempio: query "quanto ho speso in spritz" con tag [bar, cibo] → {"tag_ids":[],"date_from":...,"date_to":...,"title_query":"spritz"}
 Periodi comuni: "questa settimana" = today - 7*86400000, "questo mese" = primo giorno del mese corrente, "ieri" = today - 86400000.`;
 }
 
