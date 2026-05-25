@@ -4,6 +4,7 @@ export interface Recorder {
 }
 
 export async function createRecorder(): Promise<Recorder> {
+  if (!navigator.mediaDevices) throw new Error('Microphone requires HTTPS');
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const recorder = new MediaRecorder(stream);
   const chunks: BlobPart[] = [];

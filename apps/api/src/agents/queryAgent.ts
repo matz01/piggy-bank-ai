@@ -6,8 +6,8 @@ import { extractJson } from './utils.js';
 
 const QuerySchema = z.object({
   tag_ids: z.array(z.string()),
-  date_from: z.number(),
-  date_to: z.number(),
+  date_from: z.number().nullable(),
+  date_to: z.number().nullable(),
   title_query: z.string().nullable(),
 });
 
@@ -43,8 +43,8 @@ export async function queryExpenses(
   const object = QuerySchema.parse(extractJson(raw));
   return {
     tag_ids: object.tag_ids,
-    date_from: object.date_from,
-    date_to: object.date_to,
+    date_from: object.date_from ?? 0,
+    date_to: object.date_to ?? today,
     title_query: object.title_query,
   };
 }
