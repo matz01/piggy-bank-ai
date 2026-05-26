@@ -22,4 +22,21 @@ describe('TagChips', () => {
     await userEvent.click(screen.getByText('bar'));
     expect(onChange).toHaveBeenCalledWith(['cibo', 'bar']);
   });
+
+  it('renders Aggiungi + chip when onAdd is provided', () => {
+    render(<TagChips tags={['bar']} selected={['bar']} onChange={vi.fn()} onAdd={vi.fn()} />);
+    expect(screen.getByText('Aggiungi +')).toBeInTheDocument();
+  });
+
+  it('calls onAdd when Aggiungi + chip is clicked', async () => {
+    const onAdd = vi.fn();
+    render(<TagChips tags={['bar']} selected={['bar']} onChange={vi.fn()} onAdd={onAdd} />);
+    await userEvent.click(screen.getByText('Aggiungi +'));
+    expect(onAdd).toHaveBeenCalled();
+  });
+
+  it('does not render Aggiungi + chip when onAdd is not provided', () => {
+    render(<TagChips tags={['bar']} selected={['bar']} onChange={vi.fn()} />);
+    expect(screen.queryByText('Aggiungi +')).not.toBeInTheDocument();
+  });
 });

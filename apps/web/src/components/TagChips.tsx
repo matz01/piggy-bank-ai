@@ -2,9 +2,10 @@ interface Props {
   tags: string[];
   selected: string[];
   onChange: (selected: string[]) => void;
+  onAdd?: () => void;
 }
 
-export function TagChips({ tags, selected, onChange }: Props) {
+export function TagChips({ tags, selected, onChange, onAdd }: Props) {
   const toggle = (tag: string) => {
     const next = selected.includes(tag)
       ? selected.filter((t) => t !== tag)
@@ -30,6 +31,15 @@ export function TagChips({ tags, selected, onChange }: Props) {
           {tag}
         </button>
       ))}
+      {onAdd && (
+        <button
+          onClick={onAdd}
+          className="px-3 py-1 rounded-[20px] font-ui text-[9px] uppercase tracking-widest transition-all"
+          style={{ border: '1px dashed #b2aba3', color: '#b2aba3', background: 'transparent' }}
+        >
+          Aggiungi +
+        </button>
+      )}
     </div>
   );
 }
