@@ -51,6 +51,18 @@ describe('parseExpense', () => {
     expect((call[0] as any).prompt).toContain('due euro');
   });
 
+  it('instructs the model to use non-amount words as title even if they seem unusual', async () => {
+    vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
+      text: JSON.stringify({ titolo: 'con certo', importo: 40, tag: [], clarification: null }),
+    } as any);
+
+    await parseExpense('con certo 40 euro');
+
+    const [call] = vi.mocked(aiSdk.generateText).mock.calls;
+    const system: string = (call[0] as any).system;
+    expect(system).toMatch(/null\s*solo/i);
+  });
+
   it('uses a neutral system prompt valid for both expenses and income', async () => {
     vi.mocked(aiSdk.generateText).mockResolvedValueOnce({
       text: JSON.stringify({ titolo: 'Stipendio', importo: 2000, tag: ['lavoro'], clarification: null }),

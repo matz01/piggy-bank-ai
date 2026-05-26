@@ -13,7 +13,7 @@ const ParseSchema = z.object({
 
 const SYSTEM = `Sei un assistente per il tracciamento delle finanze personali.
 Rispondi SOLO con un oggetto JSON valido, senza markdown, con questi campi:
-- titolo: string oppure null (nome dell'operazione, null se non specificato)
+- titolo: string oppure null (nome dell'operazione — usa qualsiasi parola presente nel testo che non sia l'importo, anche se sembra strana o mal pronunciata; null solo se il testo contiene esclusivamente un importo senza altre parole)
 - importo: number oppure null (importo in euro, null se non specificato)
 - tag: array di stringhe lowercase (categorie, es. ["bar", "cibo"])
 - clarification: string oppure null (domanda se titolo o importo sono null, altrimenti null)`;
