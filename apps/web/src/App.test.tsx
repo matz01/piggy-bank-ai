@@ -137,3 +137,27 @@ describe('App add-tag flow', () => {
     expect(screen.getAllByText('gelato')).toHaveLength(1);
   });
 });
+
+describe('Debug toggle', () => {
+  beforeEach(() => {
+    useSession.setState({ state: 'idle', partial: null, clarification: null, queryResult: null });
+  });
+
+  it('does not show the debug box by default', () => {
+    render(<App />);
+    expect(screen.queryByText('DEBUG')).not.toBeInTheDocument();
+  });
+
+  it('shows the debug box after clicking the commit SHA', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByText('dev'));
+    expect(screen.getByText('DEBUG')).toBeInTheDocument();
+  });
+
+  it('hides the debug box after clicking the commit SHA twice', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByText('dev'));
+    await userEvent.click(screen.getByText('dev'));
+    expect(screen.queryByText('DEBUG')).not.toBeInTheDocument();
+  });
+});
