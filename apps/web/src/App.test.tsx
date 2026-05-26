@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import App from './App.js';
 import { useSession } from './store/sessionStore.js';
+import { readAllTagIds } from './services/db.js';
 
 vi.mock('./services/speech.js', () => ({
   createRecorder: vi.fn(),
@@ -77,5 +79,53 @@ describe('App mic flow', () => {
     await waitFor(() => expect(useSession.getState().state).toBe('recording'));
     fireEvent.pointerUp(micButton);
     await waitFor(() => expect(useSession.getState().state).toBe('idle'));
+  });
+});
+
+describe('App add-tag flow', () => {
+  beforeEach(() => {
+    useSession.setState({
+      state: 'preview',
+      partial: { titolo: 'Caffè', importo: 1.5, tag: ['bar'] },
+      clarification: null,
+      queryResult: null,
+    });
+    vi.mocked(readAllTagIds).mockResolvedValue(['colazione', 'cibo']);
+  });
+
+  it('enters adding_tag state when Aggiungi + is clicked', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByText('Aggiungi +'));
+    await waitFor(() => expect(useSession.getState().state).toBe('adding_tag'));
+    expect(readAllTagIds).toHaveBeenCalled();
+  });
+
+  it('returns to preview on confirm and new tag appears as chip', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByText('Aggiungi +'));
+    await waitFor(() => expect(useSession.getState().state).toBe('adding_tag'));
+    await userEvent.type(screen.getByRole('textbox'), 'gelato');
+    await userEvent.click(screen.getByLabelText('Conferma'));
+    await waitFor(() => expect(useSession.getState().state).toBe('preview'));
+    expect(screen.getByText('gelato')).toBeInTheDocument();
+  });
+
+  it('returns to preview on cancel without adding a tag', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByText('Aggiungi +'));
+    await waitFor(() => expect(useSession.getState().state).toBe('adding_tag'));
+    await userEvent.click(screen.getByLabelText('Annulla'));
+    await waitFor(() => expect(useSession.getState().state).toBe('preview'));
+    expect(screen.queryByText('gelato')).not.toBeInTheDocument();
+  });
+
+  it('does not add duplicate tag if already in selectedTags', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByText('Aggiungi +'));
+    await waitFor(() => expect(useSession.getState().state).toBe('adding_tag'));
+    await userEvent.type(screen.getByRole('textbox'), 'bar');
+    await userEvent.click(screen.getByLabelText('Conferma'));
+    await waitFor(() => expect(useSession.getState().state).toBe('preview'));
+    expect(screen.getAllByText('bar')).toHaveLength(1);
   });
 });

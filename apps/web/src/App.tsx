@@ -7,6 +7,7 @@ import { isClarification, isQueryResult } from '@pbai/shared';
 import { MicButton } from './components/MicButton.js';
 import { ModeSwitch } from './components/ModeSwitch.js';
 import { TagChips } from './components/TagChips.js';
+import { AddTagInput } from './components/AddTagInput.js';
 import { TransactionPreview } from './components/TransactionPreview.js';
 import { ClarificationPrompt } from './components/ClarificationPrompt.js';
 import { QueryResultView } from './components/QueryResultView.js';
@@ -20,6 +21,7 @@ export default function App() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const recorderRef = useRef<Recorder | null>(null);
   const [mode, setMode] = useState<'expense' | 'income'>('expense');
+  const [allTagIds, setAllTagIds] = useState<string[]>([]);
   const [showSalvato, setShowSalvato] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
 
@@ -109,6 +111,21 @@ export default function App() {
     setMode('expense');
   }, [session]);
 
+  const handleAddTag = useCallback(async () => {
+    const ids = await readAllTagIds();
+    setAllTagIds(ids);
+    session.setState('adding_tag');
+  }, [session]);
+
+  const handleTagConfirm = useCallback((tag: string) => {
+    setSelectedTags((prev) => prev.includes(tag) ? prev : [...prev, tag]);
+    session.setState('preview');
+  }, [session]);
+
+  const handleTagCancel = useCallback(() => {
+    session.setState('preview');
+  }, [session]);
+
   const showActions = session.state === 'preview';
 
   return (
@@ -119,24 +136,28 @@ export default function App() {
       }}
     >
       {/* Header row: status dot + commit SHA */}
-      <div className="flex items-center justify-between w-full pt-4 px-6 h-8">
-      <div className="flex items-center gap-2">
-        <div
-          className={`w-1.5 h-1.5 rounded-full ${
-            session.state === 'recording' ? 'bg-pbai-expense animate-pulse' : 'bg-pbai-dim'
-          }`}
-        />
-        <span className="font-ui text-[10px] uppercase tracking-widest text-pbai-dim">
-          {session.state}
-        </span>
-      </div>
-      <span className="font-mono text-[10px] text-pbai-dim">{COMMIT_SHA}</span>
-      </div>
+      {session.state !== 'adding_tag' && (
+        <div className="flex items-center justify-between w-full pt-4 px-6 h-8">
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-1.5 h-1.5 rounded-full ${
+              session.state === 'recording' ? 'bg-pbai-expense animate-pulse' : 'bg-pbai-dim'
+            }`}
+          />
+          <span className="font-ui text-[10px] uppercase tracking-widest text-pbai-dim">
+            {session.state}
+          </span>
+        </div>
+        <span className="font-mono text-[10px] text-pbai-dim">{COMMIT_SHA}</span>
+        </div>
+      )}
 
       {/* Mode switch */}
-      <div className="mt-3">
-        <ModeSwitch mode={mode} onChange={setMode} />
-      </div>
+      {session.state !== 'adding_tag' && (
+        <div className="mt-3">
+          <ModeSwitch mode={mode} onChange={setMode} />
+        </div>
+      )}
 
       {/* Content area */}
       <div className="flex-1 flex flex-col items-center justify-center gap-6 w-full px-6">
@@ -173,15 +194,24 @@ export default function App() {
               mode={mode}
             />
             <TagChips
-              tags={session.partial.tag ?? []}
+              tags={[...new Set([...(session.partial.tag ?? []), ...selectedTags])]}
               selected={selectedTags}
               onChange={setSelectedTags}
+              onAdd={handleAddTag}
             />
           </>
         )}
 
         {session.state === 'clarification' && session.clarification && (
           <ClarificationPrompt question={session.clarification} />
+        )}
+
+        {session.state === 'adding_tag' && (
+          <AddTagInput
+            existingTagIds={allTagIds}
+            onConfirm={handleTagConfirm}
+            onCancel={handleTagCancel}
+          />
         )}
 
         {session.state === 'query_result' && session.queryResult && (
@@ -227,7 +257,7 @@ export default function App() {
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-center w-full pb-12">
+      {session.state !== 'adding_tag' && <div className="flex items-center justify-center w-full pb-12">
         {showActions ? (
           <div className="flex items-center justify-between w-full max-w-xs px-8">
             <button
@@ -280,7 +310,7 @@ export default function App() {
             onRelease={handleMicRelease}
           />
         )}
-      </div>
+      </div>}
     </div>
   );
 }
