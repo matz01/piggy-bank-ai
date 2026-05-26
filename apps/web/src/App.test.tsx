@@ -119,13 +119,21 @@ describe('App add-tag flow', () => {
     expect(screen.queryByText('gelato')).not.toBeInTheDocument();
   });
 
-  it('does not add duplicate tag if already in selectedTags', async () => {
+  it('does not add duplicate tag if confirmed twice', async () => {
     render(<App />);
+    // First confirm: add 'gelato'
     await userEvent.click(screen.getByText('Aggiungi +'));
     await waitFor(() => expect(useSession.getState().state).toBe('adding_tag'));
-    await userEvent.type(screen.getByRole('textbox'), 'bar');
+    await userEvent.type(screen.getByRole('textbox'), 'gelato');
     await userEvent.click(screen.getByLabelText('Conferma'));
     await waitFor(() => expect(useSession.getState().state).toBe('preview'));
-    expect(screen.getAllByText('bar')).toHaveLength(1);
+    // Second confirm: try to add 'gelato' again
+    await userEvent.click(screen.getByText('Aggiungi +'));
+    await waitFor(() => expect(useSession.getState().state).toBe('adding_tag'));
+    await userEvent.type(screen.getByRole('textbox'), 'gelato');
+    await userEvent.click(screen.getByLabelText('Conferma'));
+    await waitFor(() => expect(useSession.getState().state).toBe('preview'));
+    // 'gelato' chip should appear exactly once
+    expect(screen.getAllByText('gelato')).toHaveLength(1);
   });
 });

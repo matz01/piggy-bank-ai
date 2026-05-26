@@ -257,7 +257,8 @@ export default function App() {
       </div>
 
       {/* Controls */}
-      {session.state !== 'adding_tag' && <div className="flex items-center justify-center w-full pb-12">
+      {session.state !== 'adding_tag' && (
+        <div className="flex items-center justify-center w-full pb-12">
         {showActions ? (
           <div className="flex items-center justify-between w-full max-w-xs px-8">
             <button
@@ -310,7 +311,8 @@ export default function App() {
             onRelease={handleMicRelease}
           />
         )}
-      </div>}
+      </div>
+      )}
     </div>
   );
 }
