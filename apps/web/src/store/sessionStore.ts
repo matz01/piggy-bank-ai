@@ -8,7 +8,8 @@ type SessionState =
   | 'preview'
   | 'clarification'
   | 'query_result'
-  | 'query_detail';
+  | 'query_detail'
+  | 'adding_tag';
 
 interface SessionStore {
   state: SessionState;
